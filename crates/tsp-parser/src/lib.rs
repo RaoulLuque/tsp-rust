@@ -6,19 +6,45 @@ use std::{
 
 use tsp_core::{InstanceMetadata, TSPInstance};
 
-pub enum TSPSpecificationKeyword {
-    NAME(String),
-    TYPE(String),
-    COMMENT(String),
+/// Enumeration of all possible data section keywords in a .tsp file.
+///
+/// The Keywords are according to the TSPLIB 95 specification.
+pub enum TSPDataKeyword {
+    NODE_COORD_SECTION,
+    DEPOT_SECTION,
+    DEMAND_SECTION,
+    EDGE_DATA_SECTION,
+    FIXED_EDGES_SECTION,
+    DISPLAY_DATA_SECTION,
+    TOUR_SECTION,
+    EDGE_WEIGHT_SECTION,
+}
+
+/// Enumeration of all possible keywords in the specification part
+/// of a .tsp file.
+///
+/// The Keywords are according to the TSPLIB 95 specification.
+pub enum TSPSpecificationKeyword<'InputFile> {
+    NAME(&'InputFile str),
+    TYPE(ProblemType),
+    COMMENT(&'InputFile str),
     DIMENSION(u32),
     CAPACITY(u32),
     EDGE_WEIGHT_TYPE(EdgeWeightType),
-    EDGE_WEIGHT_FORMAT,
-    NODE_COORD_SECTION,
-    EDGE_DATA_FORMAT,
-    NODE_COORD_TYPE,
-    DISPLAY_DATA_TYPE,
+    EDGE_WEIGHT_FORMAT(EdgeWeightFormat),
+    EDGE_DATA_FORMAT(EdgeDataFormat),
+    NODE_COORD_TYPE(NodeCoordType),
+    DISPLAY_DATA_TYPE(DisplayDataType),
     EOF,
+}
+
+pub enum ProblemType {
+    TSP,
+    ATSP,
+    SOP,
+    HCP,
+    CVRP,
+    TOUR,
 }
 
 pub enum EdgeWeightType {
@@ -50,15 +76,21 @@ pub enum EdgeWeightFormat {
     LOWER_DIAG_COL,
 }
 
-pub enum TSPDataKeyword {
-    NODE_COORD_SECTION,
-    DEPOT_SECTION,
-    DEMAND_SECTION,
-    EDGE_DATA_SECTION,
-    FIXED_EDGES_SECTION,
-    DISPLAY_DATA_SECTION,
-    TOUR_SECTION,
-    EDGE_WEIGHT_SECTION,
+pub enum EdgeDataFormat {
+    EDGE_LIST,
+    ADJ_LIST,
+}
+
+pub enum NodeCoordType {
+    TWOD_COORDS,
+    THREED_COORDS,
+    NO_COORDS,
+}
+
+pub enum DisplayDataType {
+    COORD_DISPLAY,
+    TWOD_DISPLAY,
+    NO_DISPLAY,
 }
 
 pub fn parse_tsp_instance<P: AsRef<Path>>(instance_path: P) -> Result<TSPInstance, std::io::Error> {
