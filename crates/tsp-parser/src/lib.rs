@@ -7,20 +7,25 @@ use std::{
 use thiserror::Error;
 use tsp_core::instance::TSPInstance;
 
-use crate::metadata_parser::{MetaDataParseError, parse_metadata};
+use crate::metadata::{MetaDataParseError, parse_metadata};
 
-pub mod metadata_parser;
+pub mod distance_data;
+pub mod metadata;
 
 #[derive(Error, Debug)]
 pub enum ParserError {
     #[error(transparent)]
-    MetaDataParseError(#[from] MetaDataParseError),
+    Io(#[from] std::io::Error),
+    #[error(transparent)]
+    MetaDataParsing(#[from] MetaDataParseError),
 }
 
-pub fn parse_tsp_instance<P: AsRef<Path>>(instance_path: P) -> Result<TSPInstance, std::io::Error> {
+pub fn parse_tsp_instance<P: AsRef<Path>>(instance_path: P) -> Result<TSPInstance, ParserError> {
     let mut lines = BufReader::new(File::open(instance_path)?).lines();
 
-    let _ = parse_metadata(&mut lines);
+    let (metadata, data_keyword, input) = parse_metadata(&mut lines)?;
+
+    parse_data_sections(input, data_keyword, metadata);
 
     todo!()
 }

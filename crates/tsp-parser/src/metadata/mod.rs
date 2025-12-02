@@ -14,7 +14,7 @@ use tsp_core::{
 
 use crate::{
     ParserError,
-    metadata_parser::metadata_builder::{InstanceMetadataBuilder, InstanceMetadataBuilderError},
+    metadata::metadata_builder::{InstanceMetadataBuilder, InstanceMetadataBuilderError},
 };
 
 pub mod metadata_builder;

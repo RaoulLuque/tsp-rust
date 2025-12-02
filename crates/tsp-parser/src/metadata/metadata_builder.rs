@@ -7,7 +7,7 @@ use tsp_core::{
     },
 };
 
-use crate::metadata_parser::MetaDataParseError;
+use crate::metadata::MetaDataParseError;
 
 #[derive(Error, Debug)]
 pub struct InstanceMetadataBuilderError(&'static str);
