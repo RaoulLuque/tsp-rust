@@ -1,5 +1,3 @@
-use typed_builder::TypedBuilder;
-
 use crate::tsp_lib_spec::{
     DisplayDataType, EdgeDataFormat, EdgeWeightFormat, EdgeWeightType, NodeCoordType, ProblemType,
 };
@@ -22,22 +20,16 @@ impl TSPInstance {
     }
 }
 
-#[derive(TypedBuilder)]
 pub struct InstanceMetadata {
     pub name: String,
     pub problem_type: ProblemType,
-    #[builder(default)]
     pub comment: Option<String>,
     pub dimension: u32,
-    #[builder(default)]
     pub capacity: Option<u32>,
     pub edge_weight_type: EdgeWeightType,
-    #[builder(default)]
     pub edge_weight_format: Option<EdgeWeightFormat>,
-    #[builder(default)]
     pub edge_data_format: Option<EdgeDataFormat>,
-    #[builder(default=NodeCoordType::NO_COORDS)]
+    /// Defaults to NO_COORDS
     pub node_coord_type: NodeCoordType,
-    #[builder(default)]
     pub display_data_type: Option<DisplayDataType>,
 }

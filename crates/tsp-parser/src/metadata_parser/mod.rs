@@ -7,16 +7,23 @@ use tsp_core::{
     instance::InstanceMetadata,
     tsp_lib_spec::{
         DisplayDataType, EdgeDataFormat, EdgeWeightFormat, EdgeWeightType, NodeCoordType,
-        ProblemType, TSPDataKeyword, TSPSpecificationKeyword,
+        ProblemType, TSPDataKeyword,
     },
 };
 
 use thiserror::Error;
 
-use crate::ParserError;
+use crate::{
+    ParserError,
+    metadata_parser::metadata_builder::{InstanceMetadataBuilder, InstanceMetadataBuilderError},
+};
+
+pub mod metadata_builder;
 
 #[derive(Error, Debug)]
 pub enum MetaDataParseError {
+    #[error("Invalid input: {0}")]
+    InvalidInput(String),
     #[error("Invalid keyword in this line: {0}")]
     InvalidKeyword(String),
     #[error("Invalid (problem) TYPE value: {0}")]
@@ -33,70 +40,111 @@ pub enum MetaDataParseError {
     InvalidNodeCoordType(String),
     #[error("Invalid DISPLAY_DATA_TYPE value: {0}")]
     InvalidDisplayDataType(String),
+    #[error(transparent)]
+    InstanceMetadataBuilderError(#[from] InstanceMetadataBuilderError),
 }
 
-enum TSPSpecificationOrDataKeyword {
-    SpecificationKeyword(TSPSpecificationKeyword),
-    DataKeyword(TSPDataKeyword),
-}
-
+/// Parses the metadata section of a TSP instance file.
+///
+/// Returns a tuple containing the parsed `InstanceMetadata`, the first encountered `TSPDataKeyword`,
+/// and a reference to the remaining lines iterator starting from the data section (the line after
+/// the first data keyword).
 pub fn parse_metadata(
     input: &mut Lines<BufReader<File>>,
-) -> Result<(InstanceMetadata, &Lines<BufReader<File>>), ParserError> {
-    let metadata_builder = InstanceMetadata::builder();
-    let a = while let Some(Ok(line)) = input.next() {
-        todo!()
+) -> Result<(InstanceMetadata, TSPDataKeyword, &Lines<BufReader<File>>), ParserError> {
+    let mut metadata_builder = InstanceMetadataBuilder::new();
+    let data_keyword = loop {
+        let Some(Ok(line)) = input.next() else {
+            return Err(
+                MetaDataParseError::InvalidInput("Unexpected end of file".to_string()).into(),
+            );
+        };
+        match parse_specification_or_data_keyword(&line, &mut metadata_builder)? {
+            None => {
+                // The specification keyword has been added to the builder inside parse_specification_or_data_keyword
+            }
+            Some(data_keyword) => {
+                // Reached data section, break the loop
+                break data_keyword;
+            }
+        }
     };
-    todo!()
+    let metadata = metadata_builder.build()?;
+
+    Ok((metadata, data_keyword, input))
 }
 
 fn parse_specification_or_data_keyword(
     line: &str,
-) -> Result<TSPSpecificationOrDataKeyword, ParserError> {
+    metadata_builder: &mut InstanceMetadataBuilder,
+) -> Result<Option<TSPDataKeyword>, ParserError> {
     let mut parts = line.splitn(2, ':');
     match (parts.next(), parts.next()) {
         // Hot path
-        (Some(k), Some(v)) => Ok(TSPSpecificationOrDataKeyword::SpecificationKeyword(
-            parse_specification(k.trim_end(), v.trim_end())?,
-        )),
-        // Cold path(s)
-        (Some(k), None) => {
-            return Ok(TSPSpecificationOrDataKeyword::DataKeyword(
-                parse_data_keyword(k)?,
-            ));
+        (Some(k), Some(v)) => {
+            parse_specification(k.trim_end(), v.trim_end(), metadata_builder)?;
+            Ok(None)
         }
-        _ => return Err(MetaDataParseError::InvalidKeyword(line.to_string()).into()),
+        // Cold path(s)
+        (Some(k), None) => Ok(Some(parse_data_keyword(k)?)),
+        _ => Err(MetaDataParseError::InvalidKeyword(line.to_string()).into()),
     }
 }
 
-fn parse_specification(keyword: &str, value: &str) -> Result<TSPSpecificationKeyword, ParserError> {
+fn parse_specification(
+    keyword: &str,
+    value: &str,
+    metadata_builder: &mut InstanceMetadataBuilder,
+) -> Result<(), ParserError> {
     match keyword {
-        "NAME" => Ok(TSPSpecificationKeyword::NAME(value.to_string())),
-        "TYPE" => Ok(TSPSpecificationKeyword::TYPE(parse_problem_type(value)?)),
-        "COMMENT" => Ok(TSPSpecificationKeyword::COMMENT(value.to_string())),
-        "DIMENSION" => {
-            Ok(TSPSpecificationKeyword::DIMENSION(value.parse().map_err(
-                |_| MetaDataParseError::InvalidDimension(keyword.to_string()),
-            )?))
+        "NAME" => {
+            metadata_builder.name_mut(value.to_string());
+            Ok(())
         }
-        "CAPACITY" => Ok(TSPSpecificationKeyword::CAPACITY(value.parse().map_err(
-            |_| MetaDataParseError::InvalidDimension(keyword.to_string()),
-        )?)),
-        "EDGE_WEIGHT_TYPE" => Ok(TSPSpecificationKeyword::EDGE_WEIGHT_TYPE(
-            parse_edge_weight_type(value)?,
-        )),
-        "EDGE_WEIGHT_FORMAT" => Ok(TSPSpecificationKeyword::EDGE_WEIGHT_FORMAT(
-            parse_edge_weight_format(value)?,
-        )),
-        "EDGE_DATA_FORMAT" => Ok(TSPSpecificationKeyword::EDGE_DATA_FORMAT(
-            parse_edge_data_format(value)?,
-        )),
-        "NODE_COORD_TYPE" => Ok(TSPSpecificationKeyword::NODE_COORD_TYPE(
-            parse_node_coord_type(value)?,
-        )),
-        "DISPLAY_DATA_TYPE" => Ok(TSPSpecificationKeyword::DISPLAY_DATA_TYPE(
-            parse_display_data_type(value)?,
-        )),
+        "TYPE" => {
+            metadata_builder.problem_type_mut(parse_problem_type(value)?);
+            Ok(())
+        }
+        "COMMENT" => {
+            metadata_builder.comment_mut(value.to_string());
+            Ok(())
+        }
+        "DIMENSION" => {
+            metadata_builder.dimension_mut(
+                value
+                    .parse()
+                    .map_err(|_| MetaDataParseError::InvalidDimension(keyword.to_string()))?,
+            );
+            Ok(())
+        }
+        "CAPACITY" => {
+            metadata_builder.capacity_mut(
+                value
+                    .parse()
+                    .map_err(|_| MetaDataParseError::InvalidDimension(keyword.to_string()))?,
+            );
+            Ok(())
+        }
+        "EDGE_WEIGHT_TYPE" => {
+            metadata_builder.edge_weight_type_mut(parse_edge_weight_type(value)?);
+            Ok(())
+        }
+        "EDGE_WEIGHT_FORMAT" => {
+            metadata_builder.edge_weight_format_mut(parse_edge_weight_format(value)?);
+            Ok(())
+        }
+        "EDGE_DATA_FORMAT" => {
+            metadata_builder.edge_data_format_mut(parse_edge_data_format(value)?);
+            Ok(())
+        }
+        "NODE_COORD_TYPE" => {
+            metadata_builder.node_coord_type_mut(parse_node_coord_type(value)?);
+            Ok(())
+        }
+        "DISPLAY_DATA_TYPE" => {
+            metadata_builder.display_data_type_mut(parse_display_data_type(value)?);
+            Ok(())
+        }
         _ => Err(MetaDataParseError::InvalidKeyword(keyword.to_string()).into()),
     }
 }

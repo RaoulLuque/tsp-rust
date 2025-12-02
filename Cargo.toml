@@ -6,6 +6,3 @@ members = [
 
 [workspace.dependencies]
 tsp-core = {path = "crates/tsp-core"}
-tsp-parser = {path = "crates/tsp-parser"}
-tsp-solvers = {path = "crates/tsp-solvers"}
-traveling-crab = {path = "."}
