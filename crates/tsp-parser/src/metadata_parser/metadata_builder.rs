@@ -31,6 +31,12 @@ pub struct InstanceMetadataBuilder {
     display_data_type: Option<DisplayDataType>,
 }
 
+impl Default for InstanceMetadataBuilder {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl InstanceMetadataBuilder {
     pub fn new() -> Self {
         Self {
