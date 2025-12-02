@@ -18,6 +18,14 @@ impl TSPInstance {
             distances,
         }
     }
+
+    pub fn metadata(&self) -> &InstanceMetadata {
+        &self.metadata
+    }
+
+    pub fn distances(&self) -> &Vec<f32> {
+        &self.distances
+    }
 }
 
 pub struct InstanceMetadata {
