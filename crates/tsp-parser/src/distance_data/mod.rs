@@ -16,8 +16,8 @@ pub fn parse_data_sections(
     input: &Lines<BufReader<File>>,
     data_keyword: TSPDataKeyword,
     metadata: InstanceMetadata,
-) -> Vec<f32> {
-    let distance_data: Vec<f32> = match data_keyword {
+) -> Vec<u32> {
+    let distance_data: Vec<u32> = match data_keyword {
         TSPDataKeyword::NODE_COORD_SECTION => {
             retrieve_distance_data_from_node_coord_section(input, &metadata)
         }
@@ -32,7 +32,7 @@ fn retrieve_distance_data_from_node_coord_section(
     metadata: &InstanceMetadata,
 ) -> Vec<u32> {
     let distance_data: Vec<u32> =
-        Vec::with_capacity(metadata.dimension as usize * metadata.dimension as usize);
+        Vec::with_capacity(metadata.dimension as usize * (metadata.dimension as usize - 1) / 2);
     let point_data: Vec<(f64, f64)> = Vec::with_capacity(metadata.dimension as usize);
 
     distance_data

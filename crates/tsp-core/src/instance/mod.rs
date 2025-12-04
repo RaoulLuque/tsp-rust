@@ -1,17 +1,23 @@
-use crate::tsp_lib_spec::{
-    DisplayDataType, EdgeDataFormat, EdgeWeightFormat, EdgeWeightType, NodeCoordType, ProblemType,
+use crate::{
+    instance::distances::Distances,
+    tsp_lib_spec::{
+        DisplayDataType, EdgeDataFormat, EdgeWeightFormat, EdgeWeightType, NodeCoordType,
+        ProblemType,
+    },
 };
 
-pub struct TSPInstance {
+mod distances;
+
+pub struct TSPInstance<T> {
     metadata: InstanceMetadata,
     /// Flattened distance matrix
     ///
     /// Row major order, i.e. distance from node i to node j is at index (i * num_nodes + j).
     /// Node indexing starts at 0.
-    distances: Vec<f32>,
+    distances: Distances<T>,
 }
 
-impl TSPInstance {
+impl<T> TSPInstance<T> {
     pub fn new_from_distances(metadata: InstanceMetadata, distances: Vec<f32>) -> Self {
         Self {
             metadata,
