@@ -1,43 +1,41 @@
 use crate::{
-    instance::distances::{Asymmetric, Distances, Symmetric},
+    instance::distances::DistancesSymmetric,
     tsp_lib_spec::{
         DisplayDataType, EdgeDataFormat, EdgeWeightFormat, EdgeWeightType, NodeCoordType,
         ProblemType,
     },
 };
 
-mod distances;
+pub mod distances;
 
-pub struct TSPInstance<T> {
+pub struct TSPSymInstance {
     metadata: InstanceMetadata,
     /// Flattened distance matrix
     ///
     /// Row major order, i.e. distance from node i to node j is at index (i * num_nodes + j).
     /// Node indexing starts at 0.
-    distances: Distances<T>,
+    distances: DistancesSymmetric,
 }
 
-impl TSPInstance<Symmetric> {
-    pub fn new_symmetric_from_distances(metadata: InstanceMetadata, distances: Vec<u32>) -> Self {
+impl TSPSymInstance {
+    pub fn new_from_raw_data(distance_data: Vec<u32>, metadata: InstanceMetadata) -> Self {
         let dimension = metadata.dimension;
         Self {
             metadata,
-            distances: Distances::new_symmetric_from_data(distances, dimension),
+            distances: DistancesSymmetric::new_from_data(distance_data, dimension),
         }
     }
-}
 
-impl TSPInstance<Asymmetric> {
-    pub fn new_asymmetric_from_distances(metadata: InstanceMetadata, distances: Vec<u32>) -> Self {
-        let dimension = metadata.dimension;
+    pub fn new_from_distances_sym(
+        distances: DistancesSymmetric,
+        metadata: InstanceMetadata,
+    ) -> Self {
         Self {
             metadata,
-            distances: Distances::new_asymmetric_from_data(distances, dimension),
+            distances,
         }
     }
-}
 
-impl<T> TSPInstance<T> {
     pub fn metadata(&self) -> &InstanceMetadata {
         &self.metadata
     }

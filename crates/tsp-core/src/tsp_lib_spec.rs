@@ -41,6 +41,7 @@ pub enum ProblemType {
     TOUR,
 }
 
+#[derive(Debug)]
 pub enum EdgeWeightType {
     EXPLICIT,
     EUC_2D,

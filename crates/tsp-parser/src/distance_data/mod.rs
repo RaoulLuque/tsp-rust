@@ -10,32 +10,91 @@ use std::{
     io::{BufReader, Lines},
 };
 
-use tsp_core::{instance::InstanceMetadata, tsp_lib_spec::TSPDataKeyword};
+use tsp_core::{
+    instance::{InstanceMetadata, distances::DistancesSymmetric},
+    tsp_lib_spec::TSPDataKeyword,
+};
 
 pub fn parse_data_sections(
-    input: &Lines<BufReader<File>>,
+    input: &mut Lines<BufReader<File>>,
     data_keyword: TSPDataKeyword,
-    metadata: InstanceMetadata,
-) -> Vec<u32> {
-    let distance_data: Vec<u32> = match data_keyword {
+    metadata: &InstanceMetadata,
+) -> DistancesSymmetric {
+    match data_keyword {
         TSPDataKeyword::NODE_COORD_SECTION => {
-            retrieve_distance_data_from_node_coord_section(input, &metadata)
+            retrieve_distance_data_from_node_coord_section(input, metadata)
         }
         _ => todo!("Other data sections are not yet implemented"),
-    };
-
-    distance_data
+    }
 }
 
 fn retrieve_distance_data_from_node_coord_section(
-    input: &Lines<BufReader<File>>,
+    input: &mut Lines<BufReader<File>>,
     metadata: &InstanceMetadata,
-) -> Vec<u32> {
-    let distance_data: Vec<u32> =
-        Vec::with_capacity(metadata.dimension as usize * (metadata.dimension as usize - 1) / 2);
-    let point_data: Vec<(f64, f64)> = Vec::with_capacity(metadata.dimension as usize);
+) -> DistancesSymmetric {
+    let node_data = retrieve_node_data_from_node_coord_section(input, metadata);
 
-    distance_data
+    match metadata.edge_weight_type {
+        tsp_core::tsp_lib_spec::EdgeWeightType::EUC_2D => {
+            compute_distances_euclidean(node_data, metadata.dimension)
+        }
+        _ => unimplemented!(
+            "Edge weight type {:?} is not yet implemented",
+            metadata.edge_weight_type
+        ),
+    }
+}
+
+fn retrieve_node_data_from_node_coord_section(
+    input: &mut Lines<BufReader<File>>,
+    metadata: &InstanceMetadata,
+) -> Vec<(f64, f64)> {
+    let mut point_data: Vec<(f64, f64)> = Vec::with_capacity(metadata.dimension);
+
+    for line in input {
+        let line = line.expect("Failed to read line from input");
+        if line.trim() == "EOF" {
+            break;
+        }
+
+        let mut parts = line.split_whitespace();
+        let _node_index: usize = parts
+            .next()
+            .expect("Missing node index")
+            .parse()
+            .expect("Failed to parse node index");
+        let x: f64 = parts
+            .next()
+            .expect("Missing x coordinate")
+            .parse()
+            .expect("Failed to parse x coordinate");
+        let y: f64 = parts
+            .next()
+            .expect("Missing y coordinate")
+            .parse()
+            .expect("Failed to parse y coordinate");
+
+        point_data.push((x, y));
+    }
+
+    point_data
+}
+
+fn compute_distances_euclidean(
+    point_data: Vec<(f64, f64)>,
+    dimension: usize,
+) -> DistancesSymmetric {
+    // TODO: Handle symmetric / asymmetric cases
+    let mut distance_data = vec![0; dimension * dimension];
+
+    for i in 0..dimension {
+        for j in 0..dimension {
+            let distance = compute_euclidean_distance(&point_data[i], &point_data[j]);
+            distance_data[i * dimension + j] = distance;
+        }
+    }
+
+    DistancesSymmetric::new_from_data(distance_data, dimension)
 }
 
 /// Computes the Euclidean distance between two points as defined in TSPLIB95.

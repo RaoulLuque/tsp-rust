@@ -22,8 +22,8 @@ pub struct InstanceMetadataBuilder {
     name: Option<String>,
     problem_type: Option<ProblemType>,
     comment: Option<String>,
-    dimension: Option<u32>,
-    capacity: Option<u32>,
+    dimension: Option<usize>,
+    capacity: Option<usize>,
     edge_weight_type: Option<EdgeWeightType>,
     edge_weight_format: Option<EdgeWeightFormat>,
     edge_data_format: Option<EdgeDataFormat>,
@@ -106,22 +106,22 @@ impl InstanceMetadataBuilder {
         self
     }
 
-    pub fn dimension(mut self, dimension: u32) -> Self {
+    pub fn dimension(mut self, dimension: usize) -> Self {
         self.dimension = Some(dimension);
         self
     }
 
-    pub fn dimension_mut(&mut self, dimension: u32) -> &mut Self {
+    pub fn dimension_mut(&mut self, dimension: usize) -> &mut Self {
         self.dimension = Some(dimension);
         self
     }
 
-    pub fn capacity(mut self, capacity: u32) -> Self {
+    pub fn capacity(mut self, capacity: usize) -> Self {
         self.capacity = Some(capacity);
         self
     }
 
-    pub fn capacity_mut(&mut self, capacity: u32) -> &mut Self {
+    pub fn capacity_mut(&mut self, capacity: usize) -> &mut Self {
         self.capacity = Some(capacity);
         self
     }
