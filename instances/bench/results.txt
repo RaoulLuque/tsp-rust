@@ -1,0 +1,13 @@
+Parse "a280.tsp"        time:   [204.35 µs 208.31 µs 212.76 µs]
+                        change: [+1.1816% +5.1478% +9.0599%] (p = 0.01 < 0.05)
+                        Performance has regressed.
+Found 8 outliers among 100 measurements (8.00%)
+  6 (6.00%) high mild
+  2 (2.00%) high severe
+
+Benchmarking d18512_parsing/Parse "d18512.tsp": Warming up for 3.0000 s
+Warning: Unable to complete 10 samples in 5.0s. You may wish to increase target time to 23.0s.
+d18512_parsing/Parse "d18512.tsp"
+                        time:   [2.2330 s 2.2655 s 2.3004 s]
+                        change: [+1.7080% +3.2283% +4.7562%] (p = 0.00 < 0.05)
+                        Performance has regressed.
