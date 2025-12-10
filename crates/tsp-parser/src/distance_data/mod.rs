@@ -50,24 +50,21 @@ fn retrieve_node_data_from_node_coord_section(
 ) -> Vec<(f64, f64)> {
     let mut point_data: Vec<(f64, f64)> = Vec::with_capacity(metadata.dimension);
     while let Some(index_newline) = memchr(b'\n', &mmap[*index_in_map..]) {
-        let line = unsafe {
-            std::str::from_utf8_unchecked(&mmap[*index_in_map..*index_in_map + index_newline])
-        };
-        // println!("Parsing line: {}", line);
-
         // Move the index to the start of the next line (+1 for the newline character)
         *index_in_map += index_newline + 1;
 
-        if line.trim() == "EOF" {
+        let line = &mmap[*index_in_map - index_newline - 1..*index_in_map - 1];
+        let line_str = unsafe { std::str::from_utf8_unchecked(line) };
+
+        // Check if end of file is reached
+        if line_str == "EOF" {
             break;
         }
 
-        let mut parts = line.split_whitespace();
-        let _node_index: usize = parts
-            .next()
-            .expect("Missing node index")
-            .parse()
-            .expect("Failed to parse node index");
+        // We assume the input to be split by ascii whitespace
+        let mut parts = line_str.split_ascii_whitespace();
+        let _node_index = parts.next();
+        // TODO: Handwrite parsing to parse as unsigned integer first and if there's a decimal point, switch to float parsing using std
         let x: f64 = parts
             .next()
             .expect("Missing x coordinate")

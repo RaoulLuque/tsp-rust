@@ -16,17 +16,16 @@ d18512_parsing/Parse "d18512.tsp"
 
 # Just parsing
 Parse and compute distances "a280.tsp"
-                        time:   [36.369 µs 36.492 µs 36.633 µs]
-                        change: [−29.881% −27.202% −24.628%] (p = 0.00 < 0.05)
-                        Performance has improved.
-Found 7 outliers among 100 measurements (7.00%)
-  3 (3.00%) high mild
-  4 (4.00%) high severe
+                        time:   [30.850 µs 31.020 µs 31.212 µs]
+                        change: [+0.8045% +4.2081% +7.5538%] (p = 0.01 < 0.05)
+                        Change within noise threshold.
+Found 13 outliers among 100 measurements (13.00%)
+  2 (2.00%) high mild
+  11 (11.00%) high severe
 
 d18512_parsing/Parse and compute distances "d18512.tsp"
-                        time:   [1.4021 ms 1.4107 ms 1.4262 ms]
-                        change: [−38.757% −36.288% −33.059%] (p = 0.00 < 0.05)
-                        Performance has improved.
-Found 2 outliers among 10 measurements (20.00%)
-  1 (10.00%) high mild
+                        time:   [912.16 µs 914.02 µs 915.79 µs]
+                        change: [−2.4759% +0.4485% +3.2109%] (p = 0.79 > 0.05)
+                        No change in performance detected.
+Found 1 outliers among 10 measurements (10.00%)
   1 (10.00%) high severe
