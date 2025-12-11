@@ -6,3 +6,6 @@
 # Perf
 flamegraph.svg
 perf*
+
+# Logs
+output.txt

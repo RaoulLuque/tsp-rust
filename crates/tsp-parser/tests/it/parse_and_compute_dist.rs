@@ -41,6 +41,6 @@ fn test_d198() {
 }
 
 #[test]
-fn test_d1291() {
-    check_input_file_against_golden_file("d1291");
+fn test_d493() {
+    check_input_file_against_golden_file("d493");
 }
