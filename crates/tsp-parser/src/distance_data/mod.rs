@@ -10,7 +10,7 @@ use memmap2::Mmap;
 use tsp_core::{
     instance::{
         InstanceMetadata,
-        distances::{DistancesSymmetric, get_lower_triangle_matrix_entry},
+        distances::{DistancesSymmetric, get_lower_triangle_matrix_entry_column_bigger},
     },
     tsp_lib_spec::TSPDataKeyword,
 };
@@ -125,7 +125,7 @@ fn compute_distances_euclidean(
 
     for i in 0..dimension {
         for j in i..dimension {
-            let index = get_lower_triangle_matrix_entry(i, j);
+            let index = get_lower_triangle_matrix_entry_column_bigger(i, j);
             let distance = compute_euclidean_distance(&point_data[i], &point_data[j]);
             debug_assert!(
                 distance_data.len() > index,
@@ -154,6 +154,5 @@ fn compute_euclidean_distance(point_a: &(f64, f64), point_b: &(f64, f64)) -> u32
 /// Expects a non-negative float input.
 #[inline(always)]
 fn nint(x: f64) -> u32 {
-    // TODO: Check if round_ties_even would behave the same and possibly achieve better performance
     (x + 0.5) as u32
 }

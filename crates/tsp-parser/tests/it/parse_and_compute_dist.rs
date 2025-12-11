@@ -27,6 +27,16 @@ fn check_input_file_against_golden_file(file_name: &str) {
         golden_distance_data.len(),
         input_instance.raw_distances().len()
     );
+    for (i, &distance) in golden_distance_data.iter().enumerate() {
+        assert_eq!(
+            distance,
+            input_instance.raw_distances()[i],
+            "Distance data mismatch at index {} with values {} (expected) vs {} (actual)",
+            i,
+            distance,
+            input_instance.raw_distances()[i]
+        );
+    }
     assert_eq!(input_instance.raw_distances(), golden_distance_data);
 }
 

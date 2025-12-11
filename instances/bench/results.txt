@@ -1,16 +1,40 @@
 # --- Parsing and Computing Distances ---
-Parse "a280.tsp"        time:   [192.75 µs 193.21 µs 193.77 µs]
-                        change: [−2.7535% +0.2569% +3.9151%] (p = 0.88 > 0.05)
-                        No change in performance detected.
-Found 14 outliers among 100 measurements (14.00%)
-  6 (6.00%) high mild
-  8 (8.00%) high severe
+Parse and compute distances "d198.tsp"
+                        time:   [105.94 µs 106.69 µs 107.50 µs]
+                        change: [−7.4545% −5.7631% −4.2817%] (p = 0.00 < 0.05)
+                        Performance has improved.
+Found 5 outliers among 100 measurements (5.00%)
+  4 (4.00%) high mild
+  1 (1.00%) high severe
 
-Benchmarking d18512_parsing/Parse "d18512.tsp": Warming up for 3.0000 s
-Warning: Unable to complete 10 samples in 5.0s. You may wish to increase target time to 21.9s.
-d18512_parsing/Parse "d18512.tsp"
-                        time:   [2.1695 s 2.1733 s 2.1770 s]
-                        change: [−4.0210% −2.6731% −1.6241%] (p = 0.00 < 0.05)
+Parse and compute distances "a280.tsp"
+                        time:   [180.62 µs 181.87 µs 183.08 µs]
+                        change: [−1.5686% −0.7919% +0.0353%] (p = 0.05 < 0.05)
+                        Change within noise threshold.
+Found 1 outliers among 100 measurements (1.00%)
+  1 (1.00%) high severe
+
+Parse and compute distances "d493.tsp"
+                        time:   [535.37 µs 539.44 µs 544.13 µs]
+                        change: [−9.0308% −7.3362% −5.6784%] (p = 0.00 < 0.05)
+                        Performance has improved.
+Found 3 outliers among 100 measurements (3.00%)
+  3 (3.00%) high severe
+
+Parse and compute distances "d1291.tsp"
+                        time:   [3.3071 ms 3.3164 ms 3.3260 ms]
+                        change: [−5.6151% −4.6250% −3.7209%] (p = 0.00 < 0.05)
+                        Performance has improved.
+Found 1 outliers among 100 measurements (1.00%)
+  1 (1.00%) high mild
+
+
+
+Benchmarking d18512_parsing/Parse and compute distances "d18512.tsp": Warming up for 3.0000 s
+Warning: Unable to complete 10 samples in 5.0s. You may wish to increase target time to 22.1s.
+d18512_parsing/Parse and compute distances "d18512.tsp"
+                        time:   [2.1999 s 2.2028 s 2.2057 s]
+                        change: [−12.889% −9.3087% −5.5423%] (p = 0.00 < 0.05)
                         Performance has improved.
 
 
