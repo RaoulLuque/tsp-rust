@@ -8,7 +8,10 @@
 use memchr::memchr;
 use memmap2::Mmap;
 use tsp_core::{
-    instance::{InstanceMetadata, distances::DistancesSymmetric},
+    instance::{
+        InstanceMetadata,
+        distances::{DistancesSymmetric, get_lower_triangle_matrix_entry},
+    },
     tsp_lib_spec::TSPDataKeyword,
 };
 
@@ -86,17 +89,24 @@ fn compute_distances_euclidean(
     point_data: Vec<(f64, f64)>,
     dimension: usize,
 ) -> DistancesSymmetric {
-    let mut distance_data = vec![0; dimension * dimension];
+    let mut distance_data = vec![0; dimension * (dimension + 1) / 2];
 
-    // for i in 0..dimension {
-    //     for j in i..dimension {
-    //         let index = get_lower_triangle_matrix_entry(i, j);
-    //         let distance = compute_euclidean_distance(&point_data[i], &point_data[j]);
-    //         debug_assert!(distance_data.len() > index);
-    //         // Safety: Index is computed to be within bounds of distance_data
-    //         unsafe { *distance_data.get_unchecked_mut(index) = distance };
-    //     }
-    // }
+    for i in 0..dimension {
+        for j in i..dimension {
+            let index = get_lower_triangle_matrix_entry(i, j);
+            let distance = compute_euclidean_distance(&point_data[i], &point_data[j]);
+            debug_assert!(
+                distance_data.len() > index,
+                "Computed index {} for i: {}, j: {} is out of bounds for distance data of length {}",
+                index,
+                i,
+                j,
+                distance_data.len()
+            );
+            // Safety: Index is computed to be within bounds of distance_data
+            unsafe { *distance_data.get_unchecked_mut(index) = distance };
+        }
+    }
 
     DistancesSymmetric::new_from_data(distance_data, dimension)
 }
