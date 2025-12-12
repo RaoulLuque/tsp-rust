@@ -9,3 +9,6 @@ perf*
 
 # Logs
 output.txt
+
+# Temp
+/logo
