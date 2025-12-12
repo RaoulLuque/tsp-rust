@@ -26,7 +26,12 @@ tsp-solvers = {path = "crates/tsp-solvers"}
 
 [profile.release]
 debug = true
-lto = "thin"
+lto = "off"
+
+[profile.ship]
+inherits = "release"
+debug = false
+lto = "fat"
 
 [workspace.lints.rust]
 unexpected_cfgs = { level = "warn", check-cfg = ['cfg(docsrs_dep)'] }

@@ -3,6 +3,10 @@
 /foreign_solvers
 /instances/tsplib_symmetric
 
+# Cargo
+.cargo/config.toml
+
+
 # Perf
 flamegraph.svg
 perf*
