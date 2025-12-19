@@ -1,5 +1,5 @@
 use crate::{
-    instance::distance::DistanceMatrixSymmetric,
+    instance::distance::{Distance, DistanceMatrixSymmetric},
     tsp_lib_spec::{
         DisplayDataType, EdgeDataFormat, EdgeWeightFormat, EdgeWeightType, NodeCoordType,
         ProblemType,
@@ -21,7 +21,7 @@ pub struct TSPSymInstance {
 }
 
 impl TSPSymInstance {
-    pub fn new_from_raw_data(distance_data: Vec<u32>, metadata: InstanceMetadata) -> Self {
+    pub fn new_from_raw_data(distance_data: Vec<Distance>, metadata: InstanceMetadata) -> Self {
         let dimension = metadata.dimension;
         Self {
             metadata,
@@ -43,7 +43,7 @@ impl TSPSymInstance {
         &self.metadata
     }
 
-    pub fn raw_distances(&self) -> &[u32] {
+    pub fn raw_distances(&self) -> &[Distance] {
         &self.distances.data
     }
 }

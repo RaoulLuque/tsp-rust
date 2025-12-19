@@ -10,7 +10,7 @@ use memmap2::Mmap;
 use tsp_core::{
     instance::{
         InstanceMetadata,
-        distance::{DistanceMatrixSymmetric, get_lower_triangle_matrix_entry_row_bigger},
+        distance::{Distance, DistanceMatrixSymmetric, get_lower_triangle_matrix_entry_row_bigger},
     },
     tsp_lib_spec::TSPDataKeyword,
 };
@@ -123,7 +123,7 @@ fn parse_node_coord_section(
 fn distances_euclidean(point_data: &[(f64, f64)], dimension: usize) -> DistanceMatrixSymmetric {
     let total_size = dimension * (dimension + 1) / 2;
 
-    let mut distance_data = vec![0; total_size];
+    let mut distance_data = vec![Distance(0); total_size];
 
     if total_size < PARALLELISM_BOUND {
         distances_euclidean_chunk(&mut distance_data, point_data, 0);
@@ -149,7 +149,7 @@ fn distances_euclidean(point_data: &[(f64, f64)], dimension: usize) -> DistanceM
 
 #[inline(always)]
 fn distances_euclidean_chunk(
-    chunk: &mut [u32],
+    chunk: &mut [Distance],
     point_data: &[(f64, f64)],
     chunk_start_index: usize,
 ) {
@@ -219,7 +219,7 @@ fn distances_euclidean_chunk(
 
 #[inline(always)]
 fn compute_and_set_distance(
-    chunk: &mut [u32],
+    chunk: &mut [Distance],
     row: usize,
     column: usize,
     chunk_start_index: usize,
@@ -233,8 +233,8 @@ fn compute_and_set_distance(
 
 #[inline(always)]
 fn set_distance(
-    chunk: &mut [u32],
-    distance: u32,
+    chunk: &mut [Distance],
+    distance: Distance,
     row: usize,
     column: usize,
     chunk_start_index: usize,
@@ -256,14 +256,16 @@ fn set_distance(
 
 /// Computes the Euclidean distance between two points as defined in TSPLIB95.
 #[inline(always)]
-fn compute_euclidean_distance(point_a: &(f64, f64), point_b: &(f64, f64)) -> u32 {
-    nint(((point_a.0 - point_b.0).powi(2) + (point_a.1 - point_b.1).powi(2)).sqrt())
+fn compute_euclidean_distance(point_a: &(f64, f64), point_b: &(f64, f64)) -> Distance {
+    Distance(nint(
+        ((point_a.0 - point_b.0).powi(2) + (point_a.1 - point_b.1).powi(2)).sqrt(),
+    ))
 }
 
 /// Nearest integer function as defined in TSPLIB95.
 ///
 /// Expects a non-negative float input.
 #[inline(always)]
-fn nint(x: f64) -> u32 {
-    (x + 0.5) as u32
+fn nint(x: f64) -> i32 {
+    (x + 0.5) as i32
 }

@@ -5,6 +5,8 @@ use std::{
     path::Path,
 };
 
+use tsp_core::instance::distance::Distance;
+
 fn check_input_file_against_golden_file(file_name: &str) {
     let input_instance =
         tsp_parser::parse_tsp_instance("../../instances/bench/".to_owned() + file_name + ".tsp")
@@ -16,12 +18,12 @@ fn check_input_file_against_golden_file(file_name: &str) {
     .map(|line| {
         let line = line.unwrap();
         line.split(",")
-            .map(|entry| entry.trim().parse::<u32>().unwrap())
-            .collect::<Vec<u32>>()
+            .map(|entry| Distance(entry.trim().parse::<i32>().unwrap()))
+            .collect::<Vec<Distance>>()
             .into_iter()
     })
     .flatten()
-    .collect::<Vec<u32>>();
+    .collect::<Vec<Distance>>();
 
     assert_eq!(
         golden_distance_data.len(),
@@ -31,7 +33,7 @@ fn check_input_file_against_golden_file(file_name: &str) {
         assert_eq!(
             distance,
             input_instance.raw_distances()[i],
-            "Distance data mismatch at index {} with values {} (expected) vs {} (actual)",
+            "Distance data mismatch at index {} with values {:?} (expected) vs {:?} (actual)",
             i,
             distance,
             input_instance.raw_distances()[i]

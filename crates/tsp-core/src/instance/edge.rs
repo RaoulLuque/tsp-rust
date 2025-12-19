@@ -1,4 +1,4 @@
-use crate::instance::node::Node;
+use crate::instance::{distance::Distance, node::Node};
 
 /// An undirected edge between two nodes.
 #[derive(Debug, Clone, Copy)]
@@ -53,13 +53,13 @@ impl Ord for UnEdge {
 ///
 /// That is, when comparing two edges, the one with the lower cost is considered greater.
 pub struct InvWeightUnEdge {
-    pub cost: u32,
+    pub cost: Distance,
     pub from: Node,
     pub to: Node,
 }
 
 impl InvWeightUnEdge {
-    pub fn new(cost: u32, from: Node, to: Node) -> Self {
+    pub fn new(cost: Distance, from: Node, to: Node) -> Self {
         Self { cost, from, to }
     }
 

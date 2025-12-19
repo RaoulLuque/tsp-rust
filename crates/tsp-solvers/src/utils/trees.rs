@@ -39,7 +39,7 @@ fn min_spanning_tree(distance_matrix: &impl DistanceMatrix) -> Vec<UnEdge> {
     selected.set(0, true);
 
     for to in 1..number_of_nodes {
-        let cost = distance_matrix.get_distance(0, to);
+        let cost = distance_matrix.get_distance_to_bigger(Node(0), Node(to));
         next_edges.push(InvWeightUnEdge {
             cost,
             from: Node(0),
@@ -67,7 +67,7 @@ fn min_spanning_tree(distance_matrix: &impl DistanceMatrix) -> Vec<UnEdge> {
             if selected[to] {
                 continue;
             }
-            let cost = distance_matrix.get_distance(weighted_edge.to.0, to);
+            let cost = distance_matrix.get_distance(weighted_edge.to, Node(to));
             next_edges.push(InvWeightUnEdge {
                 cost,
                 from: weighted_edge.to,
@@ -81,7 +81,7 @@ fn min_spanning_tree(distance_matrix: &impl DistanceMatrix) -> Vec<UnEdge> {
 
 #[cfg(test)]
 mod tests {
-    use tsp_core::instance::distance::DistanceMatrixSymmetric;
+    use tsp_core::instance::distance::{Distance, DistanceMatrixSymmetric};
 
     use super::*;
 
@@ -89,10 +89,10 @@ mod tests {
     fn test_min_spanning_tree() {
         let distance_matrix =
             DistanceMatrixSymmetric::slow_new_from_distance_function(10, |from, to| {
-                if from + 1 == to || from == to + 1 {
-                    0
+                if from.0 + 1 == to.0 || from.0 == to.0 + 1 {
+                    Distance(0)
                 } else {
-                    1
+                    Distance(1)
                 }
             });
 
