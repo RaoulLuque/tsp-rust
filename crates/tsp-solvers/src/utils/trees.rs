@@ -1,6 +1,9 @@
 use std::collections::BinaryHeap;
 
-use tsp_core::instance::{distance::DistanceMatrix, edge::WeightedEdge};
+use tsp_core::instance::{
+    distance::DistanceMatrix,
+    edge::{Edge, WeightedEdge},
+};
 
 use crate::CustomBitVec;
 
@@ -8,9 +11,13 @@ use crate::CustomBitVec;
 fn min_one_tree() {}
 
 /// Compute a minimum spanning tree for given nodes and edges using prim's algorithm.
+/// We assume that the distance matrix is valid, i.e., it models a complete graph.
+///
+/// Returns a vector of number of nodes - 1 edges representing the minimum spanning tree.
 ///
 /// For more details, see https://en.wikipedia.org/wiki/Prim%27s_algorithm
-fn min_spanning_tree(distance_matrix: impl DistanceMatrix) {
+fn min_spanning_tree(distance_matrix: impl DistanceMatrix) -> Vec<Edge> {
+    // TODO: Check if kruskal's algorithm might be faster
     let number_of_nodes = distance_matrix.dimension();
 
     // Track which nodes have been selected into the MST
@@ -35,13 +42,18 @@ fn min_spanning_tree(distance_matrix: impl DistanceMatrix) {
         });
     }
 
-    while selected.count_ones() < number_of_nodes {
-        let weighted_edge = next_edges
-            .pop()
-            .expect("There should be edges left, else the graph is disconnected");
-        if selected[weighted_edge.to] {
-            continue;
-        }
+    for _ in 0..(number_of_nodes - 1) {
+        let weighted_edge = {
+            loop {
+                // TODO: Check how much performance we gain by using unwrap_unchecked here
+                let weighted_edge = next_edges.pop().expect(
+                    "There should always be edges to explore. Otherwise the graph is disconnected.",
+                );
+                if !selected[weighted_edge.to] {
+                    break weighted_edge;
+                }
+            }
+        };
 
         selected.set(weighted_edge.to, true);
         tree.push(weighted_edge.to_edge());
@@ -58,10 +70,14 @@ fn min_spanning_tree(distance_matrix: impl DistanceMatrix) {
             });
         }
     }
+
+    tree
 }
 
 /// Convert a weight to use it in a max-heap as if it were a min-heap
+#[inline(always)]
 fn convert_weight(weight: u32) -> u32 {
+    // TODO: Handle adjusted weights using nodes
     // SAFETY: Overflow is impossible here as u32::MAX >= weight since weight is u32
     unsafe { u32::MAX.unchecked_sub(weight) }
 }
