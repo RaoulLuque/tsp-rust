@@ -8,6 +8,7 @@ use crate::{
 
 pub mod distance;
 pub mod edge;
+pub mod node;
 
 #[derive(Debug, Clone)]
 pub struct TSPSymInstance {

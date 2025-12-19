@@ -2,7 +2,8 @@ use std::collections::BinaryHeap;
 
 use tsp_core::instance::{
     distance::{DistanceMatrix, DistanceMatrixSymmetric},
-    edge::{InverseWeightedUnEdge, UnEdge},
+    edge::{InvWeightUnEdge, UnEdge},
+    node::Node,
 };
 
 use crate::CustomBitVec;
@@ -29,8 +30,7 @@ fn min_spanning_tree(distance_matrix: &impl DistanceMatrix) -> Vec<UnEdge> {
     selected.resize(number_of_nodes, false);
 
     // Min-heap of edges to explore next (actually a max-heap with u32::MAX - cost as weight)
-    let mut next_edges: BinaryHeap<InverseWeightedUnEdge> =
-        BinaryHeap::with_capacity(number_of_nodes);
+    let mut next_edges: BinaryHeap<InvWeightUnEdge> = BinaryHeap::with_capacity(number_of_nodes);
 
     // The resulting tree edges in no particular order
     let mut tree = Vec::with_capacity(number_of_nodes - 1);
@@ -40,7 +40,11 @@ fn min_spanning_tree(distance_matrix: &impl DistanceMatrix) -> Vec<UnEdge> {
 
     for to in 1..number_of_nodes {
         let cost = distance_matrix.get_distance(0, to);
-        next_edges.push(InverseWeightedUnEdge { cost, from: 0, to });
+        next_edges.push(InvWeightUnEdge {
+            cost,
+            from: Node(0),
+            to: Node(to),
+        });
     }
 
     for _ in 0..(number_of_nodes - 1) {
@@ -50,24 +54,24 @@ fn min_spanning_tree(distance_matrix: &impl DistanceMatrix) -> Vec<UnEdge> {
                 let weighted_edge = next_edges.pop().expect(
                     "There should always be edges to explore. Otherwise the graph is disconnected.",
                 );
-                if !selected[weighted_edge.to] {
+                if !selected[weighted_edge.to.0] {
                     break weighted_edge;
                 }
             }
         };
 
-        selected.set(weighted_edge.to, true);
+        selected.set(weighted_edge.to.0, true);
         tree.push(weighted_edge.to_edge());
 
         for to in 1..number_of_nodes {
             if selected[to] {
                 continue;
             }
-            let cost = distance_matrix.get_distance(weighted_edge.to, to);
-            next_edges.push(InverseWeightedUnEdge {
+            let cost = distance_matrix.get_distance(weighted_edge.to.0, to);
+            next_edges.push(InvWeightUnEdge {
                 cost,
                 from: weighted_edge.to,
-                to,
+                to: Node(to),
             });
         }
     }
@@ -95,7 +99,10 @@ mod tests {
         let mst = min_spanning_tree(&distance_matrix);
         assert_eq!(mst.len(), 9);
         let expected = (0..9)
-            .map(|i| UnEdge { from: i, to: i + 1 })
+            .map(|i| UnEdge {
+                from: Node(i),
+                to: Node(i + 1),
+            })
             .collect::<Vec<_>>();
         mst.iter().for_each(|edge| {
             assert!(

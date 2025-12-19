@@ -1,11 +1,14 @@
+use crate::instance::node::Node;
+
+/// An undirected edge between two nodes.
 #[derive(Debug, Clone, Copy)]
 pub struct UnEdge {
-    pub from: usize,
-    pub to: usize,
+    pub from: Node,
+    pub to: Node,
 }
 
 impl UnEdge {
-    pub fn new(from: usize, to: usize) -> Self {
+    pub fn new(from: Node, to: Node) -> Self {
         Self { from, to }
     }
 }
@@ -49,14 +52,14 @@ impl Ord for UnEdge {
 /// An undirected edge with an inverse weight for use in a max-heap.
 ///
 /// That is, when comparing two edges, the one with the lower cost is considered greater.
-pub struct InverseWeightedUnEdge {
+pub struct InvWeightUnEdge {
     pub cost: u32,
-    pub from: usize,
-    pub to: usize,
+    pub from: Node,
+    pub to: Node,
 }
 
-impl InverseWeightedUnEdge {
-    pub fn new(cost: u32, from: usize, to: usize) -> Self {
+impl InvWeightUnEdge {
+    pub fn new(cost: u32, from: Node, to: Node) -> Self {
         Self { cost, from, to }
     }
 
@@ -68,21 +71,21 @@ impl InverseWeightedUnEdge {
     }
 }
 
-impl PartialEq for InverseWeightedUnEdge {
+impl PartialEq for InvWeightUnEdge {
     fn eq(&self, other: &Self) -> bool {
         self.cost == other.cost
     }
 }
 
-impl Eq for InverseWeightedUnEdge {}
+impl Eq for InvWeightUnEdge {}
 
-impl PartialOrd for InverseWeightedUnEdge {
+impl PartialOrd for InvWeightUnEdge {
     fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
         Some(other.cost.cmp(&self.cost))
     }
 }
 
-impl Ord for InverseWeightedUnEdge {
+impl Ord for InvWeightUnEdge {
     fn cmp(&self, other: &Self) -> std::cmp::Ordering {
         other.cost.cmp(&self.cost)
     }
