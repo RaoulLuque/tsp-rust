@@ -10,7 +10,7 @@ use memmap2::Mmap;
 use tsp_core::{
     instance::{
         InstanceMetadata,
-        distances::{DistanceMatrixSymmetric, get_lower_triangle_matrix_entry_row_bigger},
+        distance::{DistanceMatrixSymmetric, get_lower_triangle_matrix_entry_row_bigger},
     },
     tsp_lib_spec::TSPDataKeyword,
 };

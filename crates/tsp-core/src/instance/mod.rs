@@ -1,12 +1,13 @@
 use crate::{
-    instance::distances::DistanceMatrixSymmetric,
+    instance::distance::DistanceMatrixSymmetric,
     tsp_lib_spec::{
         DisplayDataType, EdgeDataFormat, EdgeWeightFormat, EdgeWeightType, NodeCoordType,
         ProblemType,
     },
 };
 
-pub mod distances;
+pub mod distance;
+pub mod edge;
 
 #[derive(Debug, Clone)]
 pub struct TSPSymInstance {
