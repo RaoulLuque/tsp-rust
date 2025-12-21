@@ -12,10 +12,13 @@ use tsp_core::instance::{
 use crate::{CustomBitVec, held_karp::EdgeState};
 
 /// Compute a minimum 1-tree with given node penalties
-fn min_one_tree(distances: DistanceMatrixSym, penalties: &[i32]) {
-    let distances_restricted_to_0_to_n_minus_1 =
-        distances.restrict_to_first_n(distances.dimension - 1);
-    let tree = min_spanning_tree(&distances_restricted_to_0_to_n_minus_1);
+fn min_one_tree(
+    distances: DistanceMatrixSym,
+    edge_states: &impl EdgeDataMatrix<EdgeState>,
+    penalties: &[i32],
+) {
+    let distances_restricted = distances.restrict_to_first_n(distances.dimension - 1);
+    let tree = min_spanning_tree(&distances_restricted, edge_states, penalties);
 }
 
 /// Compute a minimum spanning tree for given nodes and edges using prim's algorithm.
@@ -27,66 +30,89 @@ fn min_one_tree(distances: DistanceMatrixSym, penalties: &[i32]) {
 fn min_spanning_tree(
     distances: &impl EdgeDataMatrix<Distance>,
     edge_states: &impl EdgeDataMatrix<EdgeState>,
-) -> Vec<UnEdge> {
-    // TODO: Check if kruskal's algorithm might be faster
+    penalties: &[i32],
+) -> Option<Vec<UnEdge>> {
     let number_of_nodes = distances.dimension();
 
-    // Track which nodes have been selected into the MST
-    let mut selected = CustomBitVec::with_capacity(number_of_nodes);
-    selected.resize(number_of_nodes, false);
+    // Track which nodes are yet to be added to the tree
+    let mut remaining_nodes = Vec::with_capacity(number_of_nodes);
+    for node_index in 1..number_of_nodes {
+        remaining_nodes.push(Node(node_index));
+    }
 
-    // Min-heap of edges to explore next (actually a max-heap with u32::MAX - cost as weight)
-    let mut next_edges: BinaryHeap<InvWeightUnEdge> = BinaryHeap::with_capacity(number_of_nodes);
+    // For each node, track the best predecessor node and cost to reach it (Initialize with
+    // unreachable values)
+    let mut best_pred_to_node = vec![Node(number_of_nodes + 1); number_of_nodes];
+    let mut best_cost_to_node = vec![Distance(i32::MAX); number_of_nodes];
+
+    // Start from node 0
+    let mut curr = Node(0);
 
     // The resulting tree edges in no particular order
     let mut tree = Vec::with_capacity(number_of_nodes - 1);
 
-    // Start from node 0
-    selected.set(0, true);
-
-    for to in 1..number_of_nodes {
-        let cost = distances.get_data_to_bigger(Node(0), Node(to));
-        next_edges.push(InvWeightUnEdge {
-            cost,
-            from: Node(0),
-            to: Node(to),
-        });
-    }
-
+    // Tree contains n - 1 edges
     for _ in 0..(number_of_nodes - 1) {
-        let weighted_edge = {
-            loop {
-                // TODO: Check how much performance we gain by using unwrap_unchecked here
-                let weighted_edge = next_edges.pop().expect(
-                    "There should always be edges to explore. Otherwise the graph is disconnected.",
-                );
-                if !selected[weighted_edge.to.0] {
-                    break weighted_edge;
+        let mut cheapest_edge = Distance(i32::MAX);
+        let mut cheapest_node = None;
+
+        let current_penalty = penalties[curr.0];
+
+        for (index, next) in remaining_nodes.iter().enumerate() {
+            match edge_states.get_data(curr, *next) {
+                EdgeState::Excluded => continue,
+                EdgeState::Available => {
+                    let distance = distances.get_data(curr, *next);
+                    let adjusted_distance =
+                        Distance(distance.0 - current_penalty - penalties[next.0]);
+                    if adjusted_distance < best_cost_to_node[next.0] {
+                        best_cost_to_node[next.0] = adjusted_distance;
+                        best_pred_to_node[next.0] = curr;
+                    }
+                }
+                EdgeState::Fixed => {
+                    // The edge is fixed, so we must include it in the tree
+                    if best_cost_to_node[next.0] == Distance(i32::MIN) {
+                        // This means we have already included the node next via a fixed edge, so
+                        // including it again would create a cycle. Therefore, the MST is not
+                        // possible with the current (fixed) edge states.
+                        return None;
+                    }
+
+                    // Force this edge by setting its cost to the minimum possible value
+                    best_cost_to_node[next.0] = Distance(i32::MIN);
+                    best_pred_to_node[next.0] = curr;
                 }
             }
-        };
 
-        selected.set(weighted_edge.to.0, true);
-        tree.push(weighted_edge.to_edge());
-
-        for to in 1..number_of_nodes {
-            if selected[to] {
-                continue;
+            if best_cost_to_node[next.0] < cheapest_edge {
+                cheapest_edge = best_cost_to_node[next.0];
+                cheapest_node = Some((index, *next));
             }
-            let cost = distances.get_data(weighted_edge.to, Node(to));
-            next_edges.push(InvWeightUnEdge {
-                cost,
-                from: weighted_edge.to,
-                to: Node(to),
-            });
+        }
+
+        // Add the cheapest edge to the tree
+        if let Some((index, cheapest_node)) = cheapest_node {
+            tree.push(UnEdge::new(
+                best_pred_to_node[cheapest_node.0],
+                cheapest_node,
+            ));
+            remaining_nodes.swap_remove(index);
+            curr = cheapest_node;
+        } else {
+            // We were unable to reach the remaining nodes, so the MST with the current edge states
+            // is not feasible.
+            return None;
         }
     }
 
-    tree
+    Some(tree)
 }
 
 #[cfg(test)]
 mod tests {
+
+    use tsp_core::instance::edge::data::EdgeDataMatrixSym;
 
     use super::*;
 
@@ -99,8 +125,13 @@ mod tests {
                 Distance(1)
             }
         });
+        let penalties = vec![0; 10];
+        let edge_states = EdgeDataMatrixSym {
+            data: vec![EdgeState::Available; distance_matrix.data.len()],
+            dimension: distance_matrix.dimension,
+        };
 
-        let mst = min_spanning_tree(&distance_matrix);
+        let mst = min_spanning_tree(&distance_matrix, &edge_states, &penalties).unwrap();
         assert_eq!(mst.len(), 9);
         let expected = (0..9)
             .map(|i| UnEdge {
