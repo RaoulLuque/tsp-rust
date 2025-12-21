@@ -9,7 +9,7 @@ use tsp_core::instance::{
     node::Node,
 };
 
-use crate::CustomBitVec;
+use crate::{CustomBitVec, held_karp::EdgeState};
 
 /// Compute a minimum 1-tree with given node penalties
 fn min_one_tree(distances: DistanceMatrixSym, penalties: &[i32]) {
@@ -24,9 +24,12 @@ fn min_one_tree(distances: DistanceMatrixSym, penalties: &[i32]) {
 /// Returns a vector of number of nodes - 1 edges representing the minimum spanning tree.
 ///
 /// For more details, see https://en.wikipedia.org/wiki/Prim%27s_algorithm
-fn min_spanning_tree(distance_matrix: &impl EdgeDataMatrix<Distance>) -> Vec<UnEdge> {
+fn min_spanning_tree(
+    distances: &impl EdgeDataMatrix<Distance>,
+    edge_states: &impl EdgeDataMatrix<EdgeState>,
+) -> Vec<UnEdge> {
     // TODO: Check if kruskal's algorithm might be faster
-    let number_of_nodes = distance_matrix.dimension();
+    let number_of_nodes = distances.dimension();
 
     // Track which nodes have been selected into the MST
     let mut selected = CustomBitVec::with_capacity(number_of_nodes);
@@ -42,7 +45,7 @@ fn min_spanning_tree(distance_matrix: &impl EdgeDataMatrix<Distance>) -> Vec<UnE
     selected.set(0, true);
 
     for to in 1..number_of_nodes {
-        let cost = distance_matrix.get_data_to_bigger(Node(0), Node(to));
+        let cost = distances.get_data_to_bigger(Node(0), Node(to));
         next_edges.push(InvWeightUnEdge {
             cost,
             from: Node(0),
@@ -70,7 +73,7 @@ fn min_spanning_tree(distance_matrix: &impl EdgeDataMatrix<Distance>) -> Vec<UnE
             if selected[to] {
                 continue;
             }
-            let cost = distance_matrix.get_data(weighted_edge.to, Node(to));
+            let cost = distances.get_data(weighted_edge.to, Node(to));
             next_edges.push(InvWeightUnEdge {
                 cost,
                 from: weighted_edge.to,

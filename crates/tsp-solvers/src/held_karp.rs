@@ -38,8 +38,23 @@
 //! branch-and-bound search to systematically explore different configurations of the TSP tour
 //! by forcibly including or excluding edges.
 
-pub fn held_karp() {
-    todo!();
+use tsp_core::instance::edge::{data::EdgeDataMatrixSym, distance::Distance};
+
+pub fn held_karp(distances: &EdgeDataMatrixSym<Distance>) {
+    let mut upper_bound = u32::MAX;
+    let mut edge_states = EdgeDataMatrixSym {
+        data: vec![EdgeState::Available; distances.data.len()],
+        dimension: distances.dimension,
+    };
+
+    explore_node(
+        distances,
+        &mut edge_states,
+        &mut upper_bound,
+        &mut 0,
+        None,
+        0,
+    );
 }
 
 const INITIAL_MAX_ITERATIONS: usize = 1_000;
@@ -48,8 +63,11 @@ const MAX_ITERATIONS: usize = 10;
 const INITIAL_BETA: f64 = 0.99;
 const BETA_INCREASE: f64 = 0.9;
 
+type EdgeStateMatrix = EdgeDataMatrixSym<EdgeState>;
+
 #[repr(i8)]
-enum EdgeState {
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub(crate) enum EdgeState {
     Available = 1,
     Excluded = 0,
     Fixed = -1,
@@ -86,10 +104,14 @@ impl EdgeState {
 /// TODO: Document properly
 ///
 /// bb_counter: A mutable reference to a usize that counts the number of branch-and-bound nodes
-/// explored bb_limit: A usize that sets the limit for branch-and-bound exploration
+/// explored
+/// bb_limit: A usize that sets the limit for branch-and-bound exploration
 /// depth: The current depth in the search tree
 /// max_iterations: The maximum number of iterations allowed
+/// upper_bound: A mutable reference to the current best upper bound on the tour cost
 fn explore_node(
+    distances: &EdgeDataMatrixSym<Distance>,
+    edge_states: &mut EdgeStateMatrix,
     upper_bound: &mut u32,
     bb_counter: &mut usize,
     bb_limit: Option<usize>,
