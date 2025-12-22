@@ -11,14 +11,72 @@ use tsp_core::instance::{
 
 use crate::{CustomBitVec, held_karp::EdgeState};
 
-/// Compute a minimum 1-tree with given node penalties
+/// Compute a minimum 1-tree with given node penalties and edge states.
 fn min_one_tree(
     distances: DistanceMatrixSym,
     edge_states: &impl EdgeDataMatrix<EdgeState>,
     penalties: &[i32],
-) {
+) -> Option<Vec<UnEdge>> {
+    // First, compute the minimum spanning tree on all nodes except the last node
     let distances_restricted = distances.restrict_to_first_n(distances.dimension - 1);
-    let tree = min_spanning_tree(&distances_restricted, edge_states, penalties);
+    let tree = min_spanning_tree(&distances_restricted, edge_states, penalties)?;
+
+    // Next, find the two cheapest edges connecting the last node to the tree
+    let last_node = Node(distances.dimension() - 1);
+    // We will uphold the following invariant dist_cheapest_edge_a <= dist_cheapest_edge_b
+    let mut dist_cheapest_edge_a = Distance(i32::MAX);
+    let mut dist_cheapest_edge_b = Distance(i32::MAX);
+    let mut cheapest_neighbor_a = None;
+    let mut cheapest_neighbor_b = None;
+
+    for node_index in 0..(distances.dimension() - 1) {
+        let node = Node(node_index);
+        match edge_states.get_data(last_node, node) {
+            EdgeState::Excluded => continue,
+            EdgeState::Available => {
+                let distance = distances.get_data(last_node, node);
+                if distance < dist_cheapest_edge_a {
+                    // Assign new value to cheapest edge a, and move previous a to b
+                    // (because of the invariant)
+                    dist_cheapest_edge_b = dist_cheapest_edge_a;
+                    cheapest_neighbor_b = cheapest_neighbor_a;
+                    dist_cheapest_edge_a = distance;
+                    cheapest_neighbor_a = Some(node);
+                } else if distance < dist_cheapest_edge_b {
+                    // Cheaper than b but not a, so just update b
+                    dist_cheapest_edge_b = distance;
+                    cheapest_neighbor_b = Some(node);
+                }
+            }
+            EdgeState::Fixed => {
+                if dist_cheapest_edge_b == Distance(i32::MIN) {
+                    // By the invariant, this implies that dist_cheapest_edge_a is also
+                    // Distance(i32::MIN), meaning we have already included two
+                    // fixed edges and just found another one, that is, we are infeasible.
+                    return None;
+                }
+
+                // Proceed same as EdgeState::Available && distance < dist_cheapest_edge_a
+                dist_cheapest_edge_b = dist_cheapest_edge_a;
+                cheapest_neighbor_b = cheapest_neighbor_a;
+                dist_cheapest_edge_a = Distance(i32::MIN);
+                cheapest_neighbor_a = Some(node);
+            }
+        }
+    }
+
+    if let Some(neighbor_b) = cheapest_neighbor_b {
+        let mut one_tree = tree;
+        let neighbor_a =
+            cheapest_neighbor_a.expect("Cheapest neighbor A should exist by invariant");
+        one_tree.push(UnEdge::new(last_node, neighbor_a));
+        one_tree.push(UnEdge::new(last_node, neighbor_b));
+        Some(one_tree)
+    } else {
+        // If neighbor_b does not exist, we were unable to find two edges to connect the last node,
+        // so the 1-tree is not feasible.
+        None
+    }
 }
 
 /// Compute a minimum spanning tree with given edge states and node penalties. Implements a
