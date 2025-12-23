@@ -112,6 +112,15 @@ impl<'a, Data: Copy> RestrictedDataMatrixSym<'a, Data> {
     #[inline(always)]
     pub fn get_data(&self, from: Node, to: Node) -> Data {
         let index = get_lower_triangle_matrix_entry(from.0, to.0);
+        debug_assert!(
+            index < self.data.len(),
+            "Index out of bounds in RestrictedDataMatrixSym: index {}, data length {}, from {:?}, \
+             to {:?}",
+            index,
+            self.data.len(),
+            from,
+            to
+        );
         self.data[index]
     }
 

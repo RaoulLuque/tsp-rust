@@ -50,13 +50,13 @@ use crate::held_karp::{fixed_point_arithmetic::ScaledDistance, trees::min_one_tr
 mod fixed_point_arithmetic;
 mod trees;
 
-pub fn held_karp(distances: &EdgeDataMatrixSym<Distance>, edge_states: &mut EdgeStateMatrix) {
+pub fn held_karp(distances: &EdgeDataMatrixSym<Distance>) -> Option<UnTour> {
     let mut edge_states = EdgeDataMatrixSym {
         data: vec![EdgeState::Available; distances.data.len()],
         dimension: distances.dimension,
     };
 
-    let mut scaled_distances = EdgeDataMatrixSym {
+    let scaled_distances = EdgeDataMatrixSym {
         data: distances
             .data
             .iter()
@@ -83,6 +83,8 @@ pub fn held_karp(distances: &EdgeDataMatrixSym<Distance>, edge_states: &mut Edge
         None,
         0,
     );
+
+    best_tour
 }
 
 const INITIAL_MAX_ITERATIONS: usize = 1_000;
@@ -181,6 +183,7 @@ fn explore_node(
     ) {
         Some(LowerBoundOutput::Tour(tour)) => {
             // Found a new tour, that is, an upper bound
+            println!("Found new tour with cost {:?}", tour.cost);
             *upper_bound = tour.cost;
             *best_tour = Some(tour);
             return;

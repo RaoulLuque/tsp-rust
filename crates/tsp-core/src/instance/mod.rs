@@ -49,6 +49,10 @@ impl TSPSymInstance {
     pub fn raw_distances(&self) -> &[Distance] {
         &self.distances.data
     }
+
+    pub fn distances(&self) -> &DistanceMatrixSym {
+        &self.distances
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -66,6 +70,7 @@ pub struct InstanceMetadata {
     pub display_data_type: Option<DisplayDataType>,
 }
 
+#[derive(Debug, Clone)]
 pub struct UnTour {
     pub edges: Vec<UnEdge>,
     pub cost: Distance,
