@@ -1,3 +1,5 @@
+use std::marker::PhantomData;
+
 use crate::instance::node::Node;
 
 pub trait EdgeDataMatrix<Data> {
@@ -175,4 +177,88 @@ pub fn get_lower_triangle_matrix_entry_row_bigger(row: usize, column: usize) -> 
 /// Computes the index in a vec-flattened lower-(left-)triangular matrix assuming column >= row.
 pub fn get_lower_triangle_matrix_entry_column_bigger(row: usize, column: usize) -> usize {
     get_lower_triangle_matrix_entry_row_bigger(column, row)
+}
+
+pub struct ZeroIndexing;
+pub struct OneIndexing;
+
+#[derive(Debug, Clone)]
+pub struct EdgeDataAdjList<Data, Indexing> {
+    pub data: Vec<Data>,
+    pub dimension: usize,
+    indexing: PhantomData<Indexing>,
+}
+
+impl<Data, Indexing> EdgeDataAdjList<Data, Indexing> {
+    pub fn new_zero_indexed(
+        data: Vec<Data>,
+        dimension: usize,
+    ) -> EdgeDataAdjList<Data, ZeroIndexing> {
+        debug_assert_eq!(data.len(), dimension * dimension);
+        EdgeDataAdjList {
+            data,
+            dimension,
+            indexing: PhantomData,
+        }
+    }
+
+    pub fn new_one_indexed(
+        data: Vec<Data>,
+        dimension: usize,
+    ) -> EdgeDataAdjList<Data, OneIndexing> {
+        debug_assert_eq!(data.len(), dimension * dimension);
+        EdgeDataAdjList {
+            data,
+            dimension,
+            indexing: PhantomData,
+        }
+    }
+}
+
+impl<Data: Copy> EdgeDataAdjList<Data, ZeroIndexing> {
+    /// Access the data in a way that allows for faster sequential access when iterating over 'to'
+    /// nodes.
+    #[inline(always)]
+    pub fn get_data_to_seq(&self, from: Node, to: Node) -> Data {
+        let index = from.0 * self.dimension + to.0;
+        self.data[index]
+    }
+
+    /// Access the data in a way that allows for faster sequential access when iterating over 'from'
+    /// nodes.
+    #[inline(always)]
+    pub fn get_data_from_seq(&self, from: Node, to: Node) -> Data {
+        self.get_data_to_seq(to, from)
+    }
+
+    /// Get the adjacency list for a given 'from' node.
+    #[inline(always)]
+    pub fn get_adjacency_list(&self, from: Node) -> &[Data] {
+        let start_index = from.0 * self.dimension;
+        &self.data[start_index..start_index + self.dimension]
+    }
+}
+
+impl<Data: Copy> EdgeDataAdjList<Data, OneIndexing> {
+    /// Access the data in a way that allows for faster sequential access when iterating over 'to'
+    /// nodes.
+    #[inline(always)]
+    pub fn get_data_to_seq(&self, from: Node, to: Node) -> Data {
+        let index = (from.0 - 1) * self.dimension + (to.0 - 1);
+        self.data[index]
+    }
+
+    /// Access the data in a way that allows for faster sequential access when iterating over 'from'
+    /// nodes.
+    #[inline(always)]
+    pub fn get_data_from_seq(&self, from: Node, to: Node) -> Data {
+        self.get_data_to_seq(to, from)
+    }
+
+    /// Get the adjacency list for a given 'from' node.
+    #[inline(always)]
+    pub fn get_adjacency_list(&self, from: Node) -> &[Data] {
+        let start_index = (from.0 - 1) * self.dimension;
+        &self.data[start_index..start_index + self.dimension]
+    }
 }
