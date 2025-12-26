@@ -20,9 +20,14 @@ tsp-core = {workspace = true}
 
 [dev-dependencies]
 criterion = {workspace = true}
+concorde_rs ={ workspace = true}
 
 tsp-parser = {workspace = true}
 
 [[bench]]
 name = "one_tree"
+harness = false
+
+[[bench]]
+name = "held_karp"
 harness = false

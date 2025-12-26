@@ -112,6 +112,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a1d728cc89cf3aee9ff92b05e62b19ee65a02b5702cff7d5a377e32c6ae29d8d"
 
 [[package]]
+name = "concorde_rs"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4aea8f3471f0493380e796fe8eb8091360c555a19ff9b4d88290f430cf0add58"
+
+[[package]]
 name = "criterion"
 version = "0.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -506,6 +512,7 @@ name = "tsp-solvers"
 version = "0.1.0"
 dependencies = [
  "bitvec",
+ "concorde_rs",
  "criterion",
  "tsp-core",
  "tsp-parser",
