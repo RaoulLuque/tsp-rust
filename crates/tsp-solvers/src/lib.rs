@@ -1,7 +1,5 @@
 pub mod held_karp;
 
-pub(crate) type CustomBitVec = bitvec::vec::BitVec<usize, bitvec::order::Lsb0>;
-
 #[cfg(test)]
 mod tests {
     #[test]

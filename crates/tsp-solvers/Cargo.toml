@@ -14,8 +14,6 @@ edition.workspace = true
 authors.workspace = true
 
 [dependencies]
-bitvec = {workspace = true}
-
 tsp-core = {workspace = true}
 
 [dev-dependencies]

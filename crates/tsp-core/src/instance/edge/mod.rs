@@ -2,7 +2,6 @@ use crate::instance::{edge::distance::Distance, node::Node};
 
 pub mod data;
 pub mod distance;
-pub mod hk_state;
 
 /// An undirected edge between two nodes.
 #[derive(Debug, Clone, Copy)]

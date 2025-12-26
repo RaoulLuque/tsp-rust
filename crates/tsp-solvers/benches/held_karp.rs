@@ -13,7 +13,7 @@ fn held_karp_benchmark(c: &mut Criterion) {
             .collect(),
     };
 
-    c.bench_function("Compute min one tree", |b| {
+    c.bench_function("Held Karp using concorde_rs", |b| {
         b.iter(|| tsp_hk(&lower_distance_matrix).unwrap())
     });
 }
