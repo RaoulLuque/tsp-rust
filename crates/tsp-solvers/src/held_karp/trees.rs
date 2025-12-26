@@ -1,47 +1,45 @@
-use std::collections::BinaryHeap;
-
 use tsp_core::instance::{
     edge::{
-        InvWeightUnEdge, UnEdge,
-        data::{EdgeDataMatrix, EdgeDataMatrixSym},
-        distance::{Distance, DistanceMatrixSym},
+        UnEdge,
+        data::{EdgeDataMatrix, EdgeDataMatrixZeroRemoved},
     },
     node::Node,
 };
 
-use crate::{
-    CustomBitVec,
-    held_karp::{EdgeState, fixed_point_arithmetic::ScaledDistance},
-};
+use crate::held_karp::{EdgeState, fixed_point_arithmetic::ScaledDistance};
 
 /// Compute a minimum 1-tree with given node penalties and edge states.
 ///
 /// Note that the singled out node in this implementation is the last node opposed to the first
 /// node, as in some other implementations.
 pub fn min_one_tree(
-    distances_scaled: &EdgeDataMatrixSym<ScaledDistance>,
-    edge_states: &EdgeDataMatrixSym<EdgeState>,
+    distances_scaled: &EdgeDataMatrix<ScaledDistance>,
+    edge_states: &EdgeDataMatrix<EdgeState>,
     penalties: &[ScaledDistance],
 ) -> Option<Vec<UnEdge>> {
+    let (distances_scaled_zero, distances_scaled_rest) = distances_scaled.split_first_row();
+    let (edge_states_zero, edge_states_rest) = edge_states.split_first_row();
+
     // First, compute the minimum spanning tree on all nodes except the last node
-    let distances_restricted = distances_scaled.restrict_to_first_n(distances_scaled.dimension - 1);
-    let edge_states_restricted = edge_states.restrict_to_first_n(edge_states.dimension - 1);
-    let tree = min_spanning_tree(&distances_restricted, &edge_states_restricted, penalties)?;
+    let tree = min_spanning_tree(distances_scaled_rest, edge_states_rest, penalties)?;
 
     // Next, find the two cheapest edges connecting the last node to the tree
-    let last_node = Node(distances_scaled.dimension() - 1);
+    let node_zero = Node(0);
     // We will uphold the following invariant dist_cheapest_edge_a <= dist_cheapest_edge_b
     let mut dist_cheapest_edge_a = ScaledDistance::MAX;
     let mut dist_cheapest_edge_b = ScaledDistance::MAX;
     let mut cheapest_neighbor_a = None;
     let mut cheapest_neighbor_b = None;
 
-    for node_index in 0..(distances_scaled.dimension() - 1) {
+    let mut zero_neighbors_iter = distances_scaled_zero.iter().enumerate();
+    // Start from index 1, as index 0 is the distance from node 0
+    zero_neighbors_iter.next();
+
+    for (node_index, &distance) in zero_neighbors_iter {
         let node = Node(node_index);
-        match edge_states.get_data(last_node, node) {
+        match edge_states_zero[node_index] {
             EdgeState::Excluded => continue,
             EdgeState::Available => {
-                let distance = distances_scaled.get_data(last_node, node);
                 if distance < dist_cheapest_edge_a {
                     // Assign new value to cheapest edge a, and move previous a to b
                     // (because of the invariant)
@@ -76,8 +74,8 @@ pub fn min_one_tree(
         let mut one_tree = tree;
         let neighbor_a =
             cheapest_neighbor_a.expect("Cheapest neighbor A should exist by invariant");
-        one_tree.push(UnEdge::new(last_node, neighbor_a));
-        one_tree.push(UnEdge::new(last_node, neighbor_b));
+        one_tree.push(UnEdge::new(node_zero, neighbor_a));
+        one_tree.push(UnEdge::new(node_zero, neighbor_b));
         Some(one_tree)
     } else {
         // If neighbor_b does not exist, we were unable to find two edges to connect the last node,
@@ -93,43 +91,43 @@ pub fn min_one_tree(
 ///
 /// For more details, see https://en.wikipedia.org/wiki/Prim%27s_algorithm
 fn min_spanning_tree(
-    scaled_distances: &impl EdgeDataMatrix<ScaledDistance>,
-    edge_states: &impl EdgeDataMatrix<EdgeState>,
+    distances_scaled: EdgeDataMatrixZeroRemoved<ScaledDistance>,
+    edge_states: EdgeDataMatrixZeroRemoved<EdgeState>,
     penalties: &[ScaledDistance],
 ) -> Option<Vec<UnEdge>> {
-    let number_of_nodes = scaled_distances.dimension();
-
+    let number_of_nodes_in_tree = distances_scaled.dimension_adjusted();
     // Track which nodes are yet to be added to the tree
-    let mut remaining_nodes = Vec::with_capacity(number_of_nodes);
-    for node_index in 1..number_of_nodes {
+    let mut remaining_nodes = Vec::with_capacity(number_of_nodes_in_tree);
+    for node_index in 2..=number_of_nodes_in_tree {
         remaining_nodes.push(Node(node_index));
     }
 
     // For each node, track the best predecessor node and cost to reach it (Initialize with
     // unreachable values)
-    let mut best_pred_to_node = vec![Node(number_of_nodes + 1); number_of_nodes];
-    let mut best_cost_to_node = vec![ScaledDistance::MAX; number_of_nodes];
+    let mut best_pred_to_node =
+        vec![Node(number_of_nodes_in_tree + 1); number_of_nodes_in_tree + 1];
+    let mut best_cost_to_node = vec![ScaledDistance::MAX; number_of_nodes_in_tree + 1];
 
-    // Start from node 0
-    let mut curr = Node(0);
+    // Start from node 1
+    let mut curr = Node(1);
 
     // The resulting tree edges in no particular order
-    let mut tree = Vec::with_capacity(number_of_nodes - 1);
+    let mut tree = Vec::with_capacity(number_of_nodes_in_tree - 1);
 
     // Tree contains n - 1 edges
-    for _ in 0..(number_of_nodes - 1) {
+    for _ in 0..(number_of_nodes_in_tree - 1) {
         let mut cheapest_edge = ScaledDistance::MAX;
         let mut cheapest_node = None;
 
         let current_penalty = penalties[curr.0];
+        let distances_scaled_curr = distances_scaled.get_adjacency_list(curr);
+        let edge_states_curr = edge_states.get_adjacency_list(curr);
 
         for (index, next) in remaining_nodes.iter().enumerate() {
-            // TODO: Change edge states and distances to adjacency lists, to be able to iterate only
-            //       over neighbors of current node
-            match edge_states.get_data(curr, *next) {
+            match edge_states_curr[next.0] {
                 EdgeState::Excluded => continue,
                 EdgeState::Available => {
-                    let distance = scaled_distances.get_data(curr, *next);
+                    let distance = distances_scaled_curr[next.0];
                     let adjusted_distance = distance - current_penalty - penalties[next.0];
                     if adjusted_distance < best_cost_to_node[next.0] {
                         best_cost_to_node[next.0] = adjusted_distance;
@@ -172,7 +170,7 @@ fn min_spanning_tree(
         }
     }
 
-    debug_assert_eq!(tree.len(), number_of_nodes - 1);
+    debug_assert_eq!(tree.len(), number_of_nodes_in_tree - 1);
 
     Some(tree)
 }
@@ -180,28 +178,32 @@ fn min_spanning_tree(
 #[cfg(test)]
 mod tests {
 
-    use tsp_core::instance::edge::data::EdgeDataMatrixSym;
+    use tsp_core::instance::edge::data::EdgeDataMatrix;
 
     use super::*;
 
     #[test]
     fn test_min_spanning_tree_simple_tree() {
-        let distance_matrix = EdgeDataMatrixSym::slow_new_from_distance_function(10, |from, to| {
-            if from.0 + 1 == to.0 || from.0 == to.0 + 1 {
-                ScaledDistance(0)
-            } else {
-                ScaledDistance(1)
-            }
-        });
-        let penalties = vec![ScaledDistance(0); 10];
-        let edge_states = EdgeDataMatrixSym {
+        let dimension = 11;
+        let distance_matrix =
+            EdgeDataMatrix::slow_new_from_distance_function(dimension, |from, to| {
+                if from.0 + 1 == to.0 || from.0 == to.0 + 1 {
+                    ScaledDistance(0)
+                } else {
+                    ScaledDistance(1)
+                }
+            });
+        let penalties = vec![ScaledDistance(0); dimension];
+        let edge_states = EdgeDataMatrix {
             data: vec![EdgeState::Available; distance_matrix.data.len()],
             dimension: distance_matrix.dimension,
         };
+        let (_, distance_matrix_rest) = distance_matrix.split_first_row();
+        let (_, edge_states_rest) = edge_states.split_first_row();
 
-        let mst = min_spanning_tree(&distance_matrix, &edge_states, &penalties).unwrap();
-        assert_eq!(mst.len(), 9);
-        let expected = (0..9)
+        let mst = min_spanning_tree(distance_matrix_rest, edge_states_rest, &penalties).unwrap();
+        assert_eq!(mst.len(), dimension - 2);
+        let expected = (1..(dimension))
             .map(|i| UnEdge {
                 from: Node(i),
                 to: Node(i + 1),
@@ -218,72 +220,73 @@ mod tests {
 
     #[test]
     fn test_min_spanning_tree_excluded_infeasible() {
-        let distance_matrix =
-            EdgeDataMatrixSym::new_from_dimension_with_value(10, ScaledDistance(0));
+        let distance_matrix = EdgeDataMatrix::new_from_dimension_with_value(10, ScaledDistance(0));
         let penalties = vec![ScaledDistance(0); 10];
-        let edge_states = EdgeDataMatrixSym {
+        let edge_states = EdgeDataMatrix {
             data: vec![EdgeState::Excluded; distance_matrix.data.len()],
             dimension: distance_matrix.dimension,
         };
+        let (_, distance_matrix_rest) = distance_matrix.split_first_row();
+        let (_, edge_states_rest) = edge_states.split_first_row();
 
-        let mst = min_spanning_tree(&distance_matrix, &edge_states, &penalties);
+        let mst = min_spanning_tree(distance_matrix_rest, edge_states_rest, &penalties);
         assert_eq!(mst, None);
     }
 
     #[test]
     fn test_min_spanning_tree_infeasible_node_isolated() {
+        let dimension = 6;
         let distance_matrix =
-            EdgeDataMatrixSym::new_from_dimension_with_value(5, ScaledDistance(0));
-        let penalties = vec![ScaledDistance(0); 5];
-        let mut edge_states = Vec::with_capacity(distance_matrix.data.len());
-        for from in 0..5 {
+            EdgeDataMatrix::new_from_dimension_with_value(dimension, ScaledDistance(0));
+        let penalties = vec![ScaledDistance(0); dimension];
+        let mut edge_states =
+            EdgeDataMatrix::new_from_dimension_with_value(dimension, EdgeState::Available);
+        for from in 0..dimension {
             for to in 0..=from {
                 if (from == 2) || (to == 2) {
-                    edge_states.push(EdgeState::Excluded);
-                } else if (from + 1 == to) || (to + 1 == from) {
-                    edge_states.push(EdgeState::Fixed);
+                    edge_states.set_data(Node(from), Node(to), EdgeState::Excluded);
+                } else if to + 1 == from {
+                    edge_states.set_data(Node(from), Node(to), EdgeState::Fixed);
                 } else {
-                    edge_states.push(EdgeState::Available);
+                    edge_states.set_data(Node(from), Node(to), EdgeState::Available);
                 }
             }
         }
 
-        let edge_states = EdgeDataMatrixSym {
-            data: edge_states,
-            dimension: distance_matrix.dimension,
-        };
+        let (_, distance_matrix_rest) = distance_matrix.split_first_row();
+        let (_, edge_states_rest) = edge_states.split_first_row();
 
-        let mst = min_spanning_tree(&distance_matrix, &edge_states, &penalties);
+        let mst = min_spanning_tree(distance_matrix_rest, edge_states_rest, &penalties);
         assert_eq!(mst, None);
     }
 
     #[test]
     fn test_min_spanning_tree_fixed() {
+        let dimension = 6;
         let distance_matrix =
-            EdgeDataMatrixSym::new_from_dimension_with_value(5, ScaledDistance(0));
-        let penalties = vec![ScaledDistance(0); 5];
-        let mut edge_states = Vec::with_capacity(distance_matrix.data.len());
-        for from in 0..5 {
+            EdgeDataMatrix::new_from_dimension_with_value(dimension, ScaledDistance(0));
+        let penalties = vec![ScaledDistance(0); dimension];
+        let mut edge_states =
+            EdgeDataMatrix::new_from_dimension_with_value(dimension, EdgeState::Available);
+        for from in 0..dimension {
             for to in 0..=from {
-                if (from + 1 == to) || (to + 1 == from) {
-                    edge_states.push(EdgeState::Fixed);
+                if to + 1 == from {
+                    edge_states.set_data(Node(from), Node(to), EdgeState::Fixed);
                 } else {
-                    edge_states.push(EdgeState::Available);
+                    edge_states.set_data(Node(from), Node(to), EdgeState::Available);
                 }
             }
         }
 
-        let edge_states = EdgeDataMatrixSym {
-            data: edge_states,
-            dimension: distance_matrix.dimension,
-        };
+        let (_, distance_matrix_rest) = distance_matrix.split_first_row();
+        let (_, edge_states_rest) = edge_states.split_first_row();
 
-        let mst = min_spanning_tree(&distance_matrix, &edge_states, &penalties).unwrap();
+        let mst = min_spanning_tree(distance_matrix_rest, edge_states_rest, &penalties).unwrap();
         let expected = vec![
-            UnEdge::new(Node(0), Node(1)),
-            UnEdge::new(Node(1), Node(2)),
             UnEdge::new(Node(2), Node(3)),
             UnEdge::new(Node(3), Node(4)),
+            UnEdge::new(Node(1), Node(2)),
+            UnEdge::new(Node(4), Node(5)),
         ];
         assert_eq!(mst.len(), expected.len());
         mst.iter().for_each(|edge| {

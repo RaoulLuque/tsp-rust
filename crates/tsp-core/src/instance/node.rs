@@ -1,4 +1,6 @@
-use std::ops::{Add, Sub};
+use std::{
+    ops::{Add, Sub},
+};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct Node(pub usize);

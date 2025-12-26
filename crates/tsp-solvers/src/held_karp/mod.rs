@@ -42,7 +42,7 @@ use std::u32;
 
 use tsp_core::instance::{
     UnTour,
-    edge::{UnEdge, data::EdgeDataMatrixSym, distance::Distance},
+    edge::{UnEdge, data::EdgeDataMatrix, distance::Distance},
 };
 
 use crate::held_karp::{fixed_point_arithmetic::ScaledDistance, trees::min_one_tree};
@@ -50,13 +50,13 @@ use crate::held_karp::{fixed_point_arithmetic::ScaledDistance, trees::min_one_tr
 pub mod fixed_point_arithmetic;
 pub mod trees;
 
-pub fn held_karp(distances: &EdgeDataMatrixSym<Distance>) -> Option<UnTour> {
-    let mut edge_states = EdgeDataMatrixSym {
+pub fn held_karp(distances: &EdgeDataMatrix<Distance>) -> Option<UnTour> {
+    let mut edge_states = EdgeDataMatrix {
         data: vec![EdgeState::Available; distances.data.len()],
         dimension: distances.dimension,
     };
 
-    let scaled_distances = EdgeDataMatrixSym {
+    let scaled_distances = EdgeDataMatrix {
         data: distances
             .data
             .iter()
@@ -99,8 +99,6 @@ const INITIAL_ALPHA: f64 = 2.0;
 
 const INITIAL_BETA: f64 = 0.99;
 const BETA: f64 = 0.9;
-
-type EdgeStateMatrix = EdgeDataMatrixSym<EdgeState>;
 
 #[repr(i8)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -151,9 +149,9 @@ impl EdgeState {
 ///
 /// TODO: Summarize arguments in Held-Karp State Struct or Smth
 fn explore_node(
-    distances: &EdgeDataMatrixSym<Distance>,
-    scaled_distances: &EdgeDataMatrixSym<ScaledDistance>,
-    edge_states: &mut EdgeStateMatrix,
+    distances: &EdgeDataMatrix<Distance>,
+    scaled_distances: &EdgeDataMatrix<ScaledDistance>,
+    edge_states: &mut EdgeDataMatrix<EdgeState>,
     node_penalties: &mut [ScaledDistance],
     fixed_degrees: &mut [u32],
     upper_bound: &mut Distance,
@@ -282,9 +280,9 @@ enum LowerBoundOutput {
 
 /// Compute Held-Karp lower bound using 1-trees and Lagrangian relaxation
 fn held_karp_lower_bound(
-    distances: &EdgeDataMatrixSym<Distance>,
-    scaled_distances: &EdgeDataMatrixSym<ScaledDistance>,
-    edge_states: &EdgeStateMatrix,
+    distances: &EdgeDataMatrix<Distance>,
+    scaled_distances: &EdgeDataMatrix<ScaledDistance>,
+    edge_states: &EdgeDataMatrix<EdgeState>,
     node_penalties: &mut [ScaledDistance],
     upper_bound: Distance,
     max_iterations: usize,
@@ -333,10 +331,6 @@ fn held_karp_lower_bound(
         };
 
         if one_tree_cost > scaled_best_lower_bound {
-            // println!(
-            //     "New best lower bound found: {:?}",
-            //     one_tree_cost.to_distance_rounded_up()
-            // );
             scaled_best_lower_bound = one_tree_cost;
         }
 
@@ -409,8 +403,8 @@ fn held_karp_lower_bound(
 
 /// Select an edge from the 1-tree to branch on.
 fn edge_to_branch_on(
-    scaled_distances: &EdgeDataMatrixSym<ScaledDistance>,
-    edge_states: &EdgeStateMatrix,
+    scaled_distances: &EdgeDataMatrix<ScaledDistance>,
+    edge_states: &EdgeDataMatrix<EdgeState>,
     node_penalties: &[ScaledDistance],
     one_tree: &[UnEdge],
 ) -> Option<UnEdge> {
