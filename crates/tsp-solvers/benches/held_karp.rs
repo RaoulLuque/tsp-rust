@@ -3,7 +3,7 @@ use criterion::{Criterion, criterion_group, criterion_main};
 use tsp_parser::parse_tsp_instance;
 
 fn held_karp_benchmark(c: &mut Criterion) {
-    let tsp_instance = parse_tsp_instance("../../instances/bench/berlin52.tsp").unwrap();
+    let tsp_instance = parse_tsp_instance("../../instances/bench/12.tsp").unwrap();
     let lower_distance_matrix = concorde_rs::LowerDistanceMatrix {
         num_nodes: tsp_instance.metadata().dimension as u32,
         values: tsp_instance
