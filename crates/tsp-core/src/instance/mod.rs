@@ -71,3 +71,20 @@ pub struct UnTour {
     pub edges: Vec<UnEdge>,
     pub cost: Distance,
 }
+
+impl PartialEq for UnTour {
+    fn eq(&self, other: &Self) -> bool {
+        self.cost == other.cost && self.edges.len() == other.edges.len() && {
+            let mut res = true;
+            for edge in &self.edges {
+                if !other.edges.contains(edge) {
+                    res = false;
+                    break;
+                }
+            }
+            res
+        }
+    }
+}
+
+impl Eq for UnTour {}

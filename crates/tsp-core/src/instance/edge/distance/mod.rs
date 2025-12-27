@@ -4,14 +4,15 @@ use std::{
 };
 
 mod fixed_point_arithmetic;
+use fixed_point_arithmetic::FIXED_POINT_FRACTIONAL_BITS;
 pub use fixed_point_arithmetic::ScaledDistance;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord, Default)]
 pub struct Distance(pub i32);
 
 impl Distance {
-    pub const MAX: Distance = Distance(i32::MAX);
-    pub const MIN: Distance = Distance(i32::MIN);
+    pub const MAX: Distance = Distance(i32::MAX >> (FIXED_POINT_FRACTIONAL_BITS));
+    pub const MIN: Distance = Distance(i32::MIN + (1 << FIXED_POINT_FRACTIONAL_BITS));
 }
 
 impl Add for Distance {

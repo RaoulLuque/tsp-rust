@@ -293,7 +293,7 @@ fn held_karp_lower_bound(
     start_time: std::time::Instant,
     number_computed_one_trees: &mut usize,
 ) -> Option<LowerBoundOutput> {
-    let scaled_bound = ScaledDistance::from_distance(upper_bound);
+    let scaled_upper_bound = ScaledDistance::from_distance(upper_bound);
 
     // Tracks the current best lower bound found
     let mut scaled_best_lower_bound = ScaledDistance::MIN;
@@ -337,7 +337,7 @@ fn held_karp_lower_bound(
             scaled_best_lower_bound = one_tree_cost;
         }
 
-        if one_tree_cost >= scaled_bound {
+        if one_tree_cost >= scaled_upper_bound {
             // Lower bound exceeds current upper bound, prune
             break one_tree;
         }
@@ -382,7 +382,7 @@ fn held_karp_lower_bound(
         // TODO: Research on subgradient method for non-smooth optimization to find out more about
         // this
         let step_size =
-            (alpha * ((scaled_bound.0 - one_tree_cost.0) as f64 / (square_sum as f64))) as i32;
+            (alpha * ((scaled_upper_bound.0 - one_tree_cost.0) as f64 / (square_sum as f64))) as i32;
 
         if step_size <= 3 {
             // Step size is very small (<= 3 in scaled), we probably won't be making much progress
