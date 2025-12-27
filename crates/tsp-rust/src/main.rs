@@ -1,4 +1,4 @@
-use tsp_solvers::held_karp::held_karp;
+use tsp_solvers::held_karp;
 
 fn main() {
     let tsp_instance = tsp_parser::parse_tsp_instance("instances/bench/berlin52.tsp").unwrap();

@@ -7,7 +7,7 @@ use tsp_core::instance::{
     node::Node,
 };
 
-use crate::held_karp::EdgeState;
+use crate::held_karp_mod::EdgeState;
 
 /// Compute a minimum 1-tree with given node penalties and edge states.
 ///

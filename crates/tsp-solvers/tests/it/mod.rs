@@ -3,7 +3,7 @@ use tsp_core::instance::{
     edge::{UnEdge, distance::Distance},
     node::Node,
 };
-use tsp_solvers::held_karp::held_karp;
+use tsp_solvers::held_karp;
 
 #[test]
 fn test_held_karp_on_12() {

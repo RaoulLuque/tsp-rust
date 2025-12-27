@@ -1,7 +1,7 @@
 use concorde_rs::solver::tsp_hk;
 use criterion::{Criterion, criterion_group, criterion_main};
 use tsp_parser::parse_tsp_instance;
-use tsp_solvers::held_karp::held_karp;
+use tsp_solvers::held_karp;
 
 fn held_karp_benchmark_og(c: &mut Criterion) {
     let tsp_instance = parse_tsp_instance("../../instances/bench/12.tsp").unwrap();

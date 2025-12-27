@@ -49,7 +49,7 @@ use tsp_core::instance::{
     },
 };
 
-use crate::held_karp::trees::min_one_tree;
+use crate::held_karp_mod::trees::min_one_tree;
 
 pub mod trees;
 
