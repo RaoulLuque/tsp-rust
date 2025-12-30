@@ -1,42 +1,82 @@
-//! Held-Karp TSP solver implementation using branch-and-bound and Lagrangian relaxation.
-//!
-//! ## Call Structure of the Algorithm
-//! The call structure of the algorithm and sub-methods is as follows. Indented functions indicate
-//! that they are called by the function above them.
-//!
-//! - `held_karp`: Main entry point for the Held-Karp solver. Sets up parameters and initiates the
-//!   branch-and-bound search.
-//!     - `explore_node` Performs depth-first branch-and-bound search.
-//!         - `explore_node` to recursively explore the search tree.
-//!         - `edge_to_branch_on` to select edges for branching.
-//!         - `held_karp_lower_bound` to compute lower bounds using 1-trees.
-//!             - `min_one_tree` to compute minimum 1-trees as part of the lower bound calculation.
-//!                 - `min_spanning_tree` to compute minimum spanning trees using Prim's algorithm.
-//!
-//! The basic idea of the Held-Karp algorithm is to compute lower bounds on the TSP tour cost using
-//! 1-trees and Lagrangian relaxation.
-//!
-//! ## 1-trees
-//!
-//! 1-trees are minimum spanning trees that span nodes 2 to n, plus two minimum cost edges
-//! connecting node 1 to the tree. This is always a lower bound on the cost of a TSP tour, since
-//! any TSP tour is a 1-tree. Thus, the cheapest 1-tree provides a lower bound on the TSP tour cost.
-//!
-//!
-//! ## Lagrangian Relaxation
-//!
-//! Because the computed 1-tree might have many nodes with degree unequal to 2, we introduce
-//! penalties for each node based on how far their degree is from 2. This is what we call Lagrangian
-//! relaxation. By iteratively adjusting the penalties based on the degree of nodes in the 1-tree,
-//! we can converge towards a tighter lower bound on the TSP tour cost. Once an actual tour is
-//! found, we can use that as an upper bound to prune the search space in the branch-and-bound
-//! exploration.
-//!
-//! ## Edge States
-//!
-//! Edges can be in one of three states: Available, Excluded, or Fixed. This allows the
-//! branch-and-bound search to systematically explore different configurations of the TSP tour
-//! by forcibly including or excluding edges.
+/*!
+This module contains an implementation of the
+[Held-Karp algorithm](https://en.wikipedia.org/wiki/Held%E2%80%93Karp_algorithm)
+(also known as the Bellman-Held-Karp algorithm) for solving the Traveling Salesperson Problem.
+
+## Top-level Description of the Algorithm
+
+The algorithm uses branch-and-bound and Lagrangian relaxation to successively
+tighten lower and upper bounds simultaneously until the bounds converge to an optimal solution.
+
+The branch-and-bound part of the algorithm systematically explores the space of possible tours by
+branching on edges (including or excluding them from the tour) and pruning branches that cannot
+yield a better solution than the best one found so far.
+
+For finding lower bounds, the algorithm uses [1-trees](#1-trees), which are minimum spanning trees that span all nodes
+except one, plus two edges connecting the excluded node to the tree. The cost of a minimum 1-tree
+is in this case a lower bound on the cost of a TSP tour. By introducing node penalties and adjusting
+them based on the degrees of nodes in the 1-tree, we can iteratively improve the lower bound and
+nudge the 1-tree towards a valid TSP tour (the process of adjusting penalties is a form of
+[Lagrangian relaxation](#lagrangian-relaxation).
+
+We get upper bounds (that is, valid tours) via our 1-trees. When a 1-tree happens to be a valid tour
+(that is, all nodes have degree 2), we have found a (possible) new upper bound. We keep track of the best
+upper bound found so far and use it to prune branches in the branch-and-bound search.
+
+## Call Structure of the Algorithm
+
+The call structure of the algorithm and sub-methods is as follows. Indented functions indicate
+that they are called by the function above them.
+- `held_karp`:  Main entry point for the Held-Karp solver. Sets up parameters and initiates the
+                branch-and-bound search.
+    - `explore_node`:   Performs depth-first branch-and-bound search.
+        - `held_karp_lower_bound`:  Computes a lower bound using 1-trees and Lagrangian relaxation.
+            - `min_one_tree`:   Computes a minimum 1-tree given current edge states and node penalties.
+                - `min_spanning_tree`:  Computes a minimum spanning tree of all nodes except the
+                                        first using Prim's algorithm.
+        - `edge_to_branch_on`:  Selects an edge (from the 1-tree) to branch on.
+        - `explore_node`:   Is called twice (recursively) to explore the branches including or excluding
+                            the selected edge.
+
+## 1-trees
+
+1-trees are minimum spanning trees that span nodes 2 to n, plus two minimum cost edges
+connecting node 1 to the tree. This is always a lower bound on the cost of a TSP tour, since
+any TSP tour is a 1-tree. To see the latter, take any valid TSP tour, remove the edges adjacent to
+the first node, and one obtains a spanning tree. Thus, the cheapest 1-tree provides a lower bound
+on the TSP tour cost.
+
+## Lagrangian Relaxation
+
+Because 1-trees by themselves might have many nodes with degree unequal to 2 (and thus are 'far
+away' from being a valid TSP tour), we introduce node penalties that adjust the costs of edges
+incident to each node. By iteratively adjusting the penalties based on the degree of nodes in the 1-tree,
+we can converge towards 1-tree closer to an actual valid tour and thus a tighter lower bound on the
+TSP tour cost.
+
+Once an actual tour is found, we can use that as an upper bound to prune the search space in the branch-and-bound
+exploration.
+
+This is considered a lagrangian relaxation ([wikipedia](https://en.wikipedia.org/wiki/Lagrangian_relaxation))
+since instead of enforcing the degree-2 constraints strictly for our 1-trees, we instead penalize
+deviations from degree 2 via the node penalties.
+
+## Edge States
+
+Edges can be in one of three states: Available, Excluded, or Fixed. This allows the
+branch-and-bound search to systematically explore different configurations of the TSP tour
+by forcibly including or excluding edges.
+
+## References and Credit
+
+- [The Traveling Salesman Problem: A Computational Study](https://www.degruyterbrill.com/document/doi/10.1515/9781400841103/html?lang=en)
+  by David L. Applegate, Robert E. Bixby, Vasek Chvatal, and William J. Cook.
+  This book provides an in-depth treatment of various TSP algorithms, including the Held-Karp algorithm.
+- [Concorde TSP Solver](https://www.math.uwaterloo.ca/tsp/concorde.html): The Concorde TSP solver
+  is a well-known implementation of TSP algorithms, including the Held-Karp algorithm.
+  The implementation in this module is inspired by the techniques used in Concorde.
+
+*/
 
 use std::u32;
 
