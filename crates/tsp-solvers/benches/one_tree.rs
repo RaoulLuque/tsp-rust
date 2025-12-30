@@ -4,7 +4,7 @@ use tsp_parser::parse_tsp_instance;
 use tsp_solvers::held_karp_mod::{EdgeState, trees::min_one_tree as min_one_tree_function};
 
 fn min_one_tree_benchmark(c: &mut Criterion) {
-    let tsp_instance = parse_tsp_instance("../../instances/bench/a280.tsp").unwrap();
+    let tsp_instance = parse_tsp_instance("../../instances/tsplib_symmetric/a280.tsp").unwrap();
     let distances_non_symmetric = tsp_instance.distances().to_non_symmetric();
     let scaled_distances = EdgeDataMatrix {
         dimension: distances_non_symmetric.dimension,

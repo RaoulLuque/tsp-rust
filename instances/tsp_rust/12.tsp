@@ -1,4 +1,4 @@
-NAME: 10
+NAME: 12
 TYPE: TSP
 COMMENT: Imaginary instance of 12 locations in a simple square / cycle with vertices: (0.0, 0.0), (0.0, 300.0), (300.0, 300.0), (300.0, 0.0)
 DIMENSION: 12

@@ -1,7 +1,6 @@
 /target
 /.vscode
 /foreign_solvers
-/instances/tsplib_symmetric
 
 # Cargo
 .cargo/config.toml
@@ -16,3 +15,4 @@ output.txt
 
 # Temp
 /logo
+/scripts

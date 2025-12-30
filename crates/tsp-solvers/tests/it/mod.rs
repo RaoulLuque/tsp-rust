@@ -7,7 +7,8 @@ use tsp_solvers::held_karp;
 
 #[test]
 fn test_held_karp_on_12() {
-    let tsp_instance = tsp_parser::parse_tsp_instance("../../instances/bench/12.tsp").unwrap();
+    let tsp_instance =
+        tsp_parser::parse_tsp_instance("../../instances/tsp_rust/12.tsp").unwrap();
     let distances_non_symmetric = tsp_instance.distances().to_non_symmetric();
     let best_tour = held_karp(&distances_non_symmetric).unwrap();
     let edges = vec![
