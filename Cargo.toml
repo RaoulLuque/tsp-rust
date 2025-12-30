@@ -29,6 +29,9 @@ tsp-parser = {path = "crates/tsp-parser"}
 tsp-solvers = {path = "crates/tsp-solvers"}
 
 
+[profile.dev]
+opt-level = 3
+
 [profile.release]
 debug = true
 lto = "off"
