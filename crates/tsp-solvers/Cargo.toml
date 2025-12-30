@@ -16,6 +16,8 @@ authors.workspace = true
 [dependencies]
 tsp-core = {workspace = true}
 
+log = {workspace = true}
+
 [dev-dependencies]
 criterion = {workspace = true}
 concorde_rs ={ workspace = true}

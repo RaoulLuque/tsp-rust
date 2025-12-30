@@ -12,6 +12,7 @@ perf*
 
 # Logs
 output.txt
+*.sol
 
 # Temp
 /logo

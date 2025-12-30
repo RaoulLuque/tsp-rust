@@ -1,6 +1,6 @@
 use std::{
     iter::Sum,
-    ops::{Add, Mul, Sub},
+    ops::{Add, AddAssign, Mul, Sub},
 };
 
 mod fixed_point_arithmetic;
@@ -20,6 +20,12 @@ impl Add for Distance {
 
     fn add(self, other: Self) -> Self::Output {
         Distance(self.0 + other.0)
+    }
+}
+
+impl AddAssign for Distance {
+    fn add_assign(&mut self, other: Self) {
+        self.0 += other.0;
     }
 }
 

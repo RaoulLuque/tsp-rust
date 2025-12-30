@@ -16,3 +16,5 @@ categories.workspace = true
 tsp-core = { workspace = true}
 tsp-parser ={ workspace = true}
 tsp-solvers = { workspace = true}
+
+env_logger = "0.11"

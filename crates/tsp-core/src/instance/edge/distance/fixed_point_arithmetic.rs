@@ -36,18 +36,6 @@ impl ScaledDistance {
     }
 }
 
-impl From<i32> for ScaledDistance {
-    fn from(value: i32) -> Self {
-        ScaledDistance::from_i32(value)
-    }
-}
-
-impl From<Distance> for ScaledDistance {
-    fn from(value: Distance) -> Self {
-        ScaledDistance::from_distance(value)
-    }
-}
-
 impl Add for ScaledDistance {
     type Output = Self;
 

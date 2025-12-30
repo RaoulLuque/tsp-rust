@@ -40,7 +40,7 @@
 
 use std::u32;
 
-use log::info;
+use log::{debug, info, trace};
 use tsp_core::instance::{
     UnTour,
     edge::{
@@ -73,9 +73,21 @@ pub fn held_karp(distances: &EdgeDataMatrix<Distance>) -> Option<UnTour> {
 
     let mut node_penalties = initial_penalties(&scaled_distances, distances.dimension);
     let mut fixed_degrees = vec![0u32; distances.dimension];
-    let mut best_tour = None;
     let mut bb_counter = 0;
-    let mut upper_bound = Distance::MAX;
+
+    let mut initial_upper_bound = Distance(0);
+    let mut initial_tour = Vec::with_capacity(distances.dimension);
+    for i in 0..distances.dimension {
+        initial_tour.push(UnEdge {
+            from: Node(i),
+            to: Node((i + 1) % distances.dimension),
+        });
+        initial_upper_bound += distances.get_data(Node(i), Node((i + 1) % distances.dimension));
+    }
+    let mut best_tour = Some(UnTour {
+        edges: initial_tour,
+        cost: initial_upper_bound,
+    });
 
     explore_node(
         distances,
@@ -83,7 +95,7 @@ pub fn held_karp(distances: &EdgeDataMatrix<Distance>) -> Option<UnTour> {
         &mut edge_states,
         node_penalties.as_mut_slice(),
         fixed_degrees.as_mut_slice(),
-        &mut upper_bound,
+        &mut initial_upper_bound,
         &mut best_tour,
         &mut bb_counter,
         None,
@@ -123,6 +135,7 @@ pub enum EdgeState {
 /// best_tour: A mutable reference to an Option<UnTour> that stores the best tour found so far
 ///
 /// TODO: Summarize arguments in Held-Karp State Struct or Smth
+/// TODO: Possibly remove upper_bound as best_tour.cost already contains that information
 fn explore_node(
     distances: &EdgeDataMatrix<Distance>,
     scaled_distances: &EdgeDataMatrix<ScaledDistance>,
@@ -161,7 +174,7 @@ fn explore_node(
     ) {
         Some(LowerBoundOutput::Tour(tour)) => {
             // Found a new tour, that is, an upper bound
-            // println!("Found new tour with cost {:?}", tour.cost);
+            info!("Found a new best tour with cost {}", tour.cost.0);
             *upper_bound = tour.cost;
             *best_tour = Some(tour);
             return;
@@ -170,6 +183,10 @@ fn explore_node(
             // Check if the lower bound is better than the current best cost
             if lower_bound >= *upper_bound {
                 // Prune this node, as we have already found a better tour than the lower bound
+                debug!(
+                    "Pruning node with lower bound {} >= upper bound {}",
+                    lower_bound.0, upper_bound.0
+                );
                 return;
             } else {
                 one_tree
@@ -272,8 +289,47 @@ fn held_karp_lower_bound(
             let mut base_cost = 2 * node_penalty_sum;
 
             for edge in &one_tree {
+                debug_assert!(
+                    if scaled_distances.get_data(edge.from, edge.to).0 >= 0 {
+                        i32::MAX - scaled_distances.get_data(edge.from, edge.to).0 >= base_cost.0
+                    } else {
+                        i32::MIN - scaled_distances.get_data(edge.from, edge.to).0 <= base_cost.0
+                    },
+                    "Overflow in Held-Karp lower bound calculation: base_cost: {}, adding scaled \
+                     distance from edge {:?}: {} \n Node penalty sum is: {}",
+                    base_cost.0,
+                    edge,
+                    scaled_distances.get_data(edge.from, edge.to).0,
+                    node_penalty_sum.0
+                );
                 base_cost += scaled_distances.get_data(edge.from, edge.to);
+                debug_assert!(
+                    if node_penalties[edge.from.0].0 >= 0 {
+                        i32::MIN + node_penalties[edge.from.0].0 <= base_cost.0
+                    } else {
+                        i32::MAX + node_penalties[edge.from.0].0 >= base_cost.0
+                    },
+                    "Underflow in Held-Karp lower bound calculation: base_cost: {}, subtracting \
+                     penalty for from node {}: {} \n Node penalty sum is: {}",
+                    base_cost.0,
+                    edge.from.0,
+                    node_penalties[edge.from.0].0,
+                    node_penalty_sum.0
+                );
                 base_cost -= node_penalties[edge.from.0];
+                debug_assert!(
+                    if node_penalties[edge.to.0].0 >= 0 {
+                        i32::MIN + node_penalties[edge.to.0].0 <= base_cost.0
+                    } else {
+                        i32::MAX + node_penalties[edge.to.0].0 >= base_cost.0
+                    },
+                    "Underflow in Held-Karp lower bound calculation: base_cost: {}, subtracting \
+                     penalty for from node {}: {} \n Node penalty sum is: {}",
+                    base_cost.0,
+                    edge.to.0,
+                    node_penalties[edge.to.0].0,
+                    node_penalty_sum.0
+                );
                 base_cost -= node_penalties[edge.to.0];
             }
 
@@ -286,6 +342,10 @@ fn held_karp_lower_bound(
 
         if one_tree_cost >= scaled_upper_bound {
             // Lower bound exceeds current upper bound, prune
+            trace!(
+                "Pruning in held_karp_lower_bound due to lower bound {} >= upper bound {}",
+                one_tree_cost.0, scaled_upper_bound.0
+            );
             break one_tree;
         }
 

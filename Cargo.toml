@@ -19,6 +19,7 @@ members = [
 [workspace.dependencies]
 concorde_rs = "0.1.1"
 criterion = { version = "0.7", features = ["html_reports"] }
+log = "0.4"
 memchr = "2.7.6"
 memmap2 = "0.9.9"
 thiserror = "2.0.17"

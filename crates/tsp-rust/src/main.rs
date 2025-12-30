@@ -1,6 +1,8 @@
 use tsp_solvers::held_karp;
 
 fn main() {
+    env_logger::init();
+    
     let tsp_instance =
         tsp_parser::parse_tsp_instance("instances/tsplib_symmetric/berlin52.tsp").unwrap();
     // println!("Parsed TSP instance: {:?}", tsp_instance.raw_distances());
