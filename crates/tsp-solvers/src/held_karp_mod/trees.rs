@@ -10,9 +10,6 @@ use tsp_core::instance::{
 use crate::held_karp_mod::EdgeState;
 
 /// Compute a minimum 1-tree with given node penalties and edge states.
-///
-/// Note that the singled out node in this implementation is the last node opposed to the first
-/// node, as in some other implementations.
 pub fn min_one_tree(
     distances_scaled: &EdgeDataMatrix<ScaledDistance>,
     edge_states: &EdgeDataMatrix<EdgeState>,
@@ -21,10 +18,10 @@ pub fn min_one_tree(
     let (distances_scaled_zero, distances_scaled_rest) = distances_scaled.split_first_row();
     let (edge_states_zero, edge_states_rest) = edge_states.split_first_row();
 
-    // First, compute the minimum spanning tree on all nodes except the last node
+    // First, compute the minimum spanning tree on all nodes except the first one (node 0)
     let tree = min_spanning_tree(distances_scaled_rest, edge_states_rest, penalties)?;
 
-    // Next, find the two cheapest edges connecting the last node to the tree
+    // Next, find the two cheapest edges connecting the first node (node 0) to the rest of the tree
     let node_zero = Node(0);
     // We will uphold the following invariant dist_cheapest_edge_a <= dist_cheapest_edge_b
     let mut dist_cheapest_edge_a = ScaledDistance::MAX;
@@ -79,7 +76,7 @@ pub fn min_one_tree(
         one_tree.push(UnEdge::new(node_zero, neighbor_b));
         Some(one_tree)
     } else {
-        // If neighbor_b does not exist, we were unable to find two edges to connect the last node,
+        // If neighbor_b does not exist, we were unable to find two edges to connect node 0,
         // so the 1-tree is not feasible.
         None
     }
