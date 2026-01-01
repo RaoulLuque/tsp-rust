@@ -47,7 +47,7 @@ impl TSPSymInstance {
     }
 
     pub fn raw_distances(&self) -> &[Distance] {
-        &self.distances.data
+        self.distances.data()
     }
 
     pub fn distances(&self) -> &EdgeDataMatrixSym<Distance> {

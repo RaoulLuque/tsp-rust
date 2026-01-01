@@ -19,6 +19,11 @@ impl<Data> EdgeDataMatrixSym<Data> {
         Self { data, dimension }
     }
 
+    /// Returns a reference to the underlying data.
+    pub fn data(&self) -> &Vec<Data> {
+        &self.data
+    }
+
     /// Set the data at (from, to).
     #[inline(always)]
     pub fn set_data(&mut self, from: Node, to: Node, data: Data) {
