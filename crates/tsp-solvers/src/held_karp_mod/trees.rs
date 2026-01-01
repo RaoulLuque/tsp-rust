@@ -2,7 +2,7 @@ use tsp_core::instance::{
     distance::ScaledDistance,
     edge::{
         UnEdge,
-        data::{EdgeDataMatrix, EdgeDataMatrixZeroRemoved},
+        data::{EDMViewZeroRemoved, EdgeDataMatrix},
     },
     node::Node,
 };
@@ -90,8 +90,8 @@ pub fn min_one_tree(
 ///
 /// Returns a vector of edges representing the minimum spanning tree.
 fn min_spanning_tree(
-    distances_scaled: EdgeDataMatrixZeroRemoved<ScaledDistance>,
-    edge_states: EdgeDataMatrixZeroRemoved<EdgeState>,
+    distances_scaled: EDMViewZeroRemoved<ScaledDistance>,
+    edge_states: EDMViewZeroRemoved<EdgeState>,
     penalties: &[ScaledDistance],
 ) -> Option<Vec<UnEdge>> {
     let number_of_nodes_in_tree = distances_scaled.dimension_adjusted();
@@ -193,10 +193,10 @@ mod tests {
                 }
             });
         let penalties = vec![ScaledDistance(0); dimension];
-        let edge_states = EdgeDataMatrix {
-            data: vec![EdgeState::Available; distance_matrix.data.len()],
-            dimension: distance_matrix.dimension,
-        };
+        let edge_states = EdgeDataMatrix::new_from_dimension_with_value(
+            distance_matrix.dimension(),
+            EdgeState::Available,
+        );
         let (_, distance_matrix_rest) = distance_matrix.split_first_row();
         let (_, edge_states_rest) = edge_states.split_first_row();
 
@@ -221,10 +221,10 @@ mod tests {
     fn test_min_spanning_tree_excluded_infeasible() {
         let distance_matrix = EdgeDataMatrix::new_from_dimension_with_value(10, ScaledDistance(0));
         let penalties = vec![ScaledDistance(0); 10];
-        let edge_states = EdgeDataMatrix {
-            data: vec![EdgeState::Excluded; distance_matrix.data.len()],
-            dimension: distance_matrix.dimension,
-        };
+        let edge_states = EdgeDataMatrix::new_from_dimension_with_value(
+            distance_matrix.dimension(),
+            EdgeState::Excluded,
+        );
         let (_, distance_matrix_rest) = distance_matrix.split_first_row();
         let (_, edge_states_rest) = edge_states.split_first_row();
 
@@ -243,11 +243,11 @@ mod tests {
         for from in 0..dimension {
             for to in 0..=from {
                 if (from == 2) || (to == 2) {
-                    edge_states.set_data(Node(from), Node(to), EdgeState::Excluded);
+                    edge_states.set_data_symmetric(Node(from), Node(to), EdgeState::Excluded);
                 } else if to + 1 == from {
-                    edge_states.set_data(Node(from), Node(to), EdgeState::Fixed);
+                    edge_states.set_data_symmetric(Node(from), Node(to), EdgeState::Fixed);
                 } else {
-                    edge_states.set_data(Node(from), Node(to), EdgeState::Available);
+                    edge_states.set_data_symmetric(Node(from), Node(to), EdgeState::Available);
                 }
             }
         }
@@ -270,9 +270,9 @@ mod tests {
         for from in 0..dimension {
             for to in 0..=from {
                 if to + 1 == from {
-                    edge_states.set_data(Node(from), Node(to), EdgeState::Fixed);
+                    edge_states.set_data_symmetric(Node(from), Node(to), EdgeState::Fixed);
                 } else {
-                    edge_states.set_data(Node(from), Node(to), EdgeState::Available);
+                    edge_states.set_data_symmetric(Node(from), Node(to), EdgeState::Available);
                 }
             }
         }

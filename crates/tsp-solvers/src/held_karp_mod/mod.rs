@@ -98,32 +98,32 @@ mod trees;
 /// documentation][crate::held_karp_mod].
 pub fn held_karp(distances: &EdgeDataMatrix<Distance>) -> Option<UnTour> {
     info!("Starting Held-Karp solver for instance");
-    let mut edge_states = EdgeDataMatrix {
-        data: vec![EdgeState::Available; distances.data.len()],
-        dimension: distances.dimension,
-    };
+    let mut edge_states = EdgeDataMatrix::new(
+        vec![EdgeState::Available; distances.data().len()],
+        distances.dimension(),
+    );
 
-    let scaled_distances = EdgeDataMatrix {
-        data: distances
-            .data
+    let scaled_distances = EdgeDataMatrix::new(
+        distances
+            .data()
             .iter()
             .map(|&d| ScaledDistance::from_distance(d))
             .collect(),
-        dimension: distances.dimension,
-    };
+        distances.dimension(),
+    );
 
-    let mut node_penalties = initial_penalties(&scaled_distances, distances.dimension);
-    let mut fixed_degrees = vec![0u32; distances.dimension];
+    let mut node_penalties = initial_penalties(&scaled_distances, distances.dimension());
+    let mut fixed_degrees = vec![0u32; distances.dimension()];
     let mut bb_counter = 0;
 
     let mut initial_upper_bound = Distance(0);
-    let mut initial_tour = Vec::with_capacity(distances.dimension);
-    for i in 0..distances.dimension {
+    let mut initial_tour = Vec::with_capacity(distances.dimension());
+    for i in 0..distances.dimension() {
         initial_tour.push(UnEdge {
             from: Node(i),
-            to: Node((i + 1) % distances.dimension),
+            to: Node((i + 1) % distances.dimension()),
         });
-        initial_upper_bound += distances.get_data(Node(i), Node((i + 1) % distances.dimension));
+        initial_upper_bound += distances.get_data(Node(i), Node((i + 1) % distances.dimension()));
     }
     let mut best_tour = Some(UnTour {
         edges: initial_tour,
@@ -243,7 +243,7 @@ fn explore_node(
 
     // Explore the branch excluding the edge
     {
-        edge_states.set_data(branching_edge.from, branching_edge.to, EdgeState::Excluded);
+        edge_states.set_data_symmetric(branching_edge.from, branching_edge.to, EdgeState::Excluded);
 
         explore_node(
             distances,
@@ -258,14 +258,18 @@ fn explore_node(
             depth + 1,
         );
 
-        edge_states.set_data(branching_edge.from, branching_edge.to, EdgeState::Available);
+        edge_states.set_data_symmetric(
+            branching_edge.from,
+            branching_edge.to,
+            EdgeState::Available,
+        );
     }
 
     // Try exploring the branch including the edge.
     // That is, we might not be able to explore this branch, if we the edge inclusion would violate
     // the already fixed degrees / edges.
     if (fixed_degrees[branching_edge.from.0] < 2) && (fixed_degrees[branching_edge.to.0] < 2) {
-        edge_states.set_data(branching_edge.from, branching_edge.to, EdgeState::Fixed);
+        edge_states.set_data_symmetric(branching_edge.from, branching_edge.to, EdgeState::Fixed);
         fixed_degrees[branching_edge.from.0] += 1;
         fixed_degrees[branching_edge.to.0] += 1;
 
@@ -283,7 +287,11 @@ fn explore_node(
         );
 
         // Backtrack
-        edge_states.set_data(branching_edge.from, branching_edge.to, EdgeState::Available);
+        edge_states.set_data_symmetric(
+            branching_edge.from,
+            branching_edge.to,
+            EdgeState::Available,
+        );
         fixed_degrees[branching_edge.from.0] -= 1;
         fixed_degrees[branching_edge.to.0] -= 1;
     }
@@ -353,7 +361,7 @@ fn held_karp_lower_bound(
         //  Deg[node] > 0: Node has degree < 2 -> we need to increase its penalty. This makes edges
         //                 incident to node cheaper, that is, more likely to be selected.
         //  Deg[node] == 0: Node has degree == 2 -> no change to penalty.
-        let mut deg = vec![2i32; distances.dimension];
+        let mut deg = vec![2i32; distances.dimension()];
 
         for edge in &one_tree {
             deg[edge.from.0] -= 1;
@@ -448,7 +456,7 @@ fn initial_penalties(
 
     for from in 0..dimension {
         for to in 0..from {
-            let distance = scaled_distances.get_data_from_seq(Node(from), Node(to));
+            let distance = scaled_distances.get_data_to_seq(Node(from), Node(to));
             if distance < penalties[from] {
                 penalties[from] = distance;
             }
