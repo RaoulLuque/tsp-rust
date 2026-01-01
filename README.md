@@ -4,7 +4,7 @@
   <img src="assets/images/traveling_salescrab.png" alt="Traveling Salescrab"/>
 </p>
 
-This repository contains different crates for solving the Traveling Salesperson Problem (TSP) in the [Rust Programming Language](https://rust-lang.org/). The TSP is a classic optimization problem where the goal is to find the shortest possible route that visits a set of cities and returns to the origin city.
+This repository contains different crates for solving the [Traveling Salesperson Problem (TSP)](https://en.wikipedia.org/wiki/Travelling_salesman_problem) in the [Rust Programming Language](https://rust-lang.org/). The TSP is a classic optimization problem where the goal is to find the shortest possible route that visits a set of cities and returns to the origin city.
 
 ## References and Credit
 
@@ -12,7 +12,7 @@ This repository contains different crates for solving the Traveling Salesperson 
   by David L. Applegate, Robert E. Bixby, Vasek Chvatal, and William J. Cook.
   This book provides an in-depth treatment of various TSP algorithms.
 - [Concorde TSP Solver](https://www.math.uwaterloo.ca/tsp/concorde.html): The Concorde TSP solver
-  is a well-known implementation of TSP algorithms. The implementations in this crate are inspired
+  is a well-known implementation of TSP algorithms. The implementations in this repository are inspired
   by the techniques used in Concorde.
 
 ## License
