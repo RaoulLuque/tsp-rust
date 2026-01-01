@@ -599,7 +599,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "tsp-rust"
+name = "tsp-rs"
 version = "0.0.0"
 dependencies = [
  "env_logger",

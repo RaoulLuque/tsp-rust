@@ -1,5 +1,5 @@
 [package]
-name = "tsp-rust"
+name = "tsp-rs"
 
 keywords = ["tsp", "algorithms", "graphs", "networks"]
 description = "TSP tooling written in Rust."
