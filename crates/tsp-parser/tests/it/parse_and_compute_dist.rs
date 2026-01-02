@@ -2,7 +2,6 @@ use std::{
     self,
     fs::File,
     io::{BufRead, BufReader},
-    path::Path,
 };
 
 use tsp_core::instance::distance::Distance;

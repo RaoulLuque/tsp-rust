@@ -2,7 +2,7 @@ use std::{fs::File, path::Path};
 
 use memmap2::{Advice, Mmap};
 use thiserror::Error;
-use tsp_core::instance::{TSPSymInstance, distance::Distance, matrix::MatrixSym};
+use tsp_core::instance::TSPSymInstance;
 
 use crate::{
     distance_container::ParseFromTSPLib,

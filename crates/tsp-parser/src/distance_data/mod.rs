@@ -8,11 +8,7 @@
 use memchr::memchr;
 use memmap2::Mmap;
 use tsp_core::{
-    instance::{
-        InstanceMetadata,
-        distance::Distance,
-        matrix::{MatrixSym, get_lower_triangle_matrix_entry_row_bigger},
-    },
+    instance::InstanceMetadata,
     tsp_lib_spec::TSPDataKeyword,
 };
 

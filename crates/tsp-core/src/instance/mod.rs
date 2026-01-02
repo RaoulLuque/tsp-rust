@@ -2,7 +2,7 @@ use crate::{
     instance::{
         distance::Distance,
         edge::UnEdge,
-        matrix::{Matrix, MatrixSym},
+        matrix::MatrixSym,
     },
     tsp_lib_spec::{
         DisplayDataType, EdgeDataFormat, EdgeWeightFormat, EdgeWeightType, NodeCoordType,
@@ -27,7 +27,7 @@ pub struct TSPSymInstance<DistanceContainer> {
 
 impl<DistanceContainer> TSPSymInstance<DistanceContainer> {
     pub fn new(distance_container: DistanceContainer, metadata: InstanceMetadata) -> Self {
-        let dimension = metadata.dimension;
+        let _dimension = metadata.dimension;
         Self {
             metadata,
             distances: distance_container,
