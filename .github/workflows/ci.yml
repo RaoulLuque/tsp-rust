@@ -42,3 +42,44 @@ jobs:
           # Run tests with default and all features. Powerset of features is only tested on merge
           # or with the S-run-thorough-ci-tests label to save CI resources.
           cargo nextest run --package ${{ matrix.crate }} --verbose
+  
+  miri:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        crate: [tsp-core, tsp-parser, tsp-rs, tsp-solvers]
+            
+    name: Miri ${{ matrix.crate }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+      # Remove repo toolchain pin so we can specify toolchain manually
+      - name: Remove toolchain pin
+        run: rm -f rust-toolchain.toml rustup-toolchain.toml
+      - name: Install Rust Nightly
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: nightly
+          components: miri
+      - name: Install cargo-nextest
+        uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-nextest
+
+      - name: Build caching
+        uses: Swatinem/rust-cache@v2
+
+      - name: Change into the current crate directory
+        run: cd crates/${{ matrix.crate }}
+
+      - name: Run miri
+        if: ${{ matrix.crate != 'tsp-parser' }}
+        run: |
+          MIRIFLAGS=-Zmiri-disable-isolation cargo miri nextest run --features miri
+        
+      - name: Run miri for tsp-parser
+        if: ${{ matrix.crate == 'tsp-parser' }}
+        run: |
+          # tsp-parser has some very long-running tests (IO-Heavy), so we only run a short subset under Miri
+          MIRIFLAGS=-Zmiri-disable-isolation cargo miri nextest run --features miri -E 'test(short)'
