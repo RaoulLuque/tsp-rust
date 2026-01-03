@@ -11,3 +11,7 @@ license.workspace = true
 repository.workspace = true
 edition.workspace = true
 authors.workspace = true
+
+[features]
+# Unused feature in this specific crate but exists for convenience
+_miri = []

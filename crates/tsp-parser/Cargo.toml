@@ -23,7 +23,7 @@ tsp-core = {workspace = true}
 criterion = {workspace = true}
 
 [features]
-miri = []
+_miri = []
 
 [[bench]]
 name = "parse_and_compute_dist"

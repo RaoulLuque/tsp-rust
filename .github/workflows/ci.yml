@@ -73,10 +73,10 @@ jobs:
       - name: Run miri
         if: ${{ matrix.crate != 'tsp-parser' }}
         run: |
-          MIRIFLAGS=-Zmiri-disable-isolation cargo miri nextest run --features miri --package ${{ matrix.crate }}
+          MIRIFLAGS=-Zmiri-disable-isolation cargo miri nextest run --features _miri --package ${{ matrix.crate }}
         
       - name: Run miri for tsp-parser
         if: ${{ matrix.crate == 'tsp-parser' }}
         run: |
           # tsp-parser has some very long-running tests (IO-Heavy), so we only run a short subset under Miri
-          MIRIFLAGS=-Zmiri-disable-isolation cargo miri nextest run --features miri -E 'test(short)' --package "tsp-parser"
+          MIRIFLAGS=-Zmiri-disable-isolation cargo miri nextest run --features _miri -E 'test(short)' --package "tsp-parser"
