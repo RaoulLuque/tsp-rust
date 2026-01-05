@@ -1,9 +1,6 @@
-use tsp_core::instance::{
-    InstanceMetadata,
-    distance::Distance,
-    matrix::{Matrix, MatrixSym},
-};
+use tsp_core::instance::{InstanceMetadata, distance::Distance};
 
+mod matrix;
 mod matrix_sym;
 
 pub trait ParseFromTSPLib {
@@ -14,15 +11,8 @@ pub trait ParseFromTSPLib {
     ) -> Self;
 }
 
-impl ParseFromTSPLib for Matrix<Distance> {
-    fn from_node_coord_section<PointType: Sync + Send>(
-        node_data: &Vec<PointType>,
-        metadata: &InstanceMetadata,
-        distance_function: impl Fn(&PointType, &PointType) -> Distance + Sync + Send + Copy,
-    ) -> Self {
-        let sym_matrix =
-            MatrixSym::<Distance>::from_node_coord_section(node_data, metadata, distance_function);
-
-        sym_matrix.to_edge_data_matrix()
-    }
+fn find_row_column_from_lower_triangle_index(index: usize) -> (usize, usize) {
+    let row = (-0.5 + ((0.25 + 2.0 * index as f64).sqrt())).floor() as usize;
+    let column = index - (row * (row + 1)) / 2;
+    (row, column)
 }

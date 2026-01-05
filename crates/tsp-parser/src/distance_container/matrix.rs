@@ -1,16 +1,14 @@
-use tsp_core::instance::{
-    InstanceMetadata,
-    distance::Distance,
-    matrix::{MatrixSym, get_lower_triangle_matrix_entry_row_bigger},
-};
+use std::cell::UnsafeCell;
+
+use tsp_core::instance::{InstanceMetadata, distance::Distance, matrix::Matrix};
 
 use super::ParseFromTSPLib;
 use crate::distance_container::find_row_column_from_lower_triangle_index;
 
 // TODO: Add more fine grained benchmarks to determine optimal parallelism bound
-const PARALLELISM_BOUND: usize = 300_000;
+const PARALLELISM_BOUND: usize = 100_000;
 
-impl ParseFromTSPLib for MatrixSym<Distance> {
+impl ParseFromTSPLib for Matrix<Distance> {
     fn from_node_coord_section<PointType: Sync + Send>(
         node_data: &Vec<PointType>,
         metadata: &InstanceMetadata,
@@ -20,40 +18,87 @@ impl ParseFromTSPLib for MatrixSym<Distance> {
     }
 }
 
+/// TODO: Add documentation
 fn compute_dists_from_node_coords<PointType: Send + Sync>(
     point_data: &[PointType],
     dimension: usize,
     distance_function: impl Fn(&PointType, &PointType) -> Distance + Sync + Send + Copy,
-) -> MatrixSym<Distance> {
-    let total_size = dimension * (dimension + 1) / 2;
+) -> Matrix<Distance> {
+    let total_size = dimension * dimension;
+    let number_of_entries = (dimension * (dimension + 1)) / 2;
 
     let mut distance_data = vec![Distance(0); total_size];
 
     if total_size < PARALLELISM_BOUND {
-        compute_dists_from_node_coords_chunk(&mut distance_data, point_data, 0, distance_function);
+        compute_dists_from_node_coords_chunk(
+            &mut distance_data,
+            point_data,
+            0,
+            0,
+            number_of_entries,
+            distance_function,
+            dimension,
+        );
     } else {
         let nthreads = std::thread::available_parallelism().unwrap();
-        let chunk_size = total_size.div_ceil(nthreads.get());
+        let entries_per_chunk = number_of_entries.div_ceil(nthreads.get());
 
         std::thread::scope(|scope| {
+            // We keep track of two main indices:
+            // - current_chunk_start: The index in (the original) distance_data where the current
+            //   chunk starts
+            // - current_first_entry_index: The index, if one was to only consider the
+            //   lower-triangular part of the matrix, of the first entry in the current chunk
+            //
+            // We distinguish these two "realms" by including chunk / entry in the variable names.
             let mut current_chunk_start = 0;
+            let mut current_first_entry_index = 0;
+            let mut rest_distances = distance_data.as_mut_slice();
+            while current_first_entry_index < number_of_entries {
+                let (current_chunk_size, number_of_entries_current_chunk) = {
+                    // We compute the last entry index (in lower-triangular indexing) for this chunk
+                    // to determine how many entries this chunk will have, and where it ends in
+                    // distance_data.
+                    let last_entry_this_chunk = (number_of_entries - 1)
+                        .min(current_first_entry_index + entries_per_chunk - 1);
+                    let (end_row, end_column) =
+                        find_row_column_from_lower_triangle_index(last_entry_this_chunk);
 
-            for chunk in distance_data.chunks_mut(chunk_size) {
+                    (
+                        end_row * dimension + end_column + 1 - current_chunk_start,
+                        last_entry_this_chunk - current_first_entry_index + 1,
+                    )
+                };
+                let (distances_chunk, rest_distances_tmp) =
+                    rest_distances.split_at_mut(current_chunk_size);
+                rest_distances = rest_distances_tmp;
+
                 scope.spawn(move || {
                     compute_dists_from_node_coords_chunk(
-                        chunk,
+                        distances_chunk,
                         point_data,
                         current_chunk_start,
+                        current_first_entry_index,
+                        number_of_entries_current_chunk,
                         distance_function,
+                        dimension,
                     )
                 });
 
-                current_chunk_start += chunk_size;
+                current_first_entry_index += entries_per_chunk;
+                current_chunk_start += current_chunk_size;
             }
         });
     }
 
-    MatrixSym::new(distance_data, dimension)
+    for row in 0..dimension {
+        for column in 0..row {
+            let value = distance_data[row * dimension + column];
+            distance_data[column * dimension + row] = value;
+        }
+    }
+
+    Matrix::new(distance_data, dimension)
 }
 
 #[inline(always)]
@@ -61,12 +106,15 @@ fn compute_dists_from_node_coords_chunk<PointType>(
     chunk: &mut [Distance],
     point_data: &[PointType],
     chunk_start_index: usize,
+    first_entry_index: usize,
+    number_of_entries_in_chunk: usize,
     distance_function: impl Fn(&PointType, &PointType) -> Distance + Copy,
+    dimension: usize,
 ) {
-    let (start_row, start_column) = find_row_column_from_lower_triangle_index(chunk_start_index);
-
-    let (end_row, end_column) =
-        find_row_column_from_lower_triangle_index(chunk_start_index + chunk.len() - 1);
+    let (start_row, start_column) = find_row_column_from_lower_triangle_index(first_entry_index);
+    let (end_row, end_column) = find_row_column_from_lower_triangle_index(
+        first_entry_index + number_of_entries_in_chunk - 1,
+    );
 
     let start_row_point_data = &point_data[start_row];
     // We can omit the column = start_row case, as it is always zero distance
@@ -84,6 +132,7 @@ fn compute_dists_from_node_coords_chunk<PointType>(
             start_row_point_data,
             column_point_data,
             distance_function,
+            dimension,
         );
     }
 
@@ -99,6 +148,7 @@ fn compute_dists_from_node_coords_chunk<PointType>(
                 row_point_data,
                 column_point_data,
                 distance_function,
+                dimension,
             );
         }
     }
@@ -114,6 +164,7 @@ fn compute_dists_from_node_coords_chunk<PointType>(
             end_row_point_data,
             column_point_data,
             distance_function,
+            dimension,
         );
     }
 }
@@ -127,10 +178,11 @@ fn compute_and_set_distance<PointType>(
     row_point_data: &PointType,
     column_point_data: &PointType,
     distance_function: impl Fn(&PointType, &PointType) -> Distance,
+    dimension: usize,
 ) {
     let distance = distance_function(row_point_data, column_point_data);
 
-    set_distance(chunk, distance, row, column, chunk_start_index);
+    set_distance(chunk, distance, row, column, chunk_start_index, dimension);
 }
 
 #[inline(always)]
@@ -140,9 +192,9 @@ fn set_distance(
     row: usize,
     column: usize,
     chunk_start_index: usize,
+    dimension: usize,
 ) {
-    let index_in_chunk =
-        get_lower_triangle_matrix_entry_row_bigger(row, column) - chunk_start_index;
+    let index_in_chunk = row * dimension + column - chunk_start_index;
 
     debug_assert!(
         chunk.len() > index_in_chunk,
