@@ -126,12 +126,13 @@ fn parse_2d_node_coord_section(
         let line = &file_content[*index_in_map..*index_in_map + index_newline];
         // SAFETY: The TSP instance file is expected to be valid UTF-8
         let line_str = unsafe { std::str::from_utf8_unchecked(line) };
+        let line_str = line_str.trim();
 
         // Move the index to the start of the next line (+1 for the newline character)
         *index_in_map += index_newline + 1;
 
         // Check if end of file is reached
-        if line_str == "EOF" {
+        if line_str == "EOF" || line_str.is_empty() {
             break;
         }
 
