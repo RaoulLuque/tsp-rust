@@ -6,7 +6,7 @@ It provides the foundation for other crates in [`tsp-rs`](https://github.com/Rao
 [![Build status](https://github.com/RaoulLuque/tsp-rs/workflows/ci/badge.svg)](https://github.com/RaoulLuque/tsp-rs/actions)
 [![](https://img.shields.io/crates/v/tsp-core.svg)](https://crates.io/crates/tsp-core)
 
-Dual-licensed under MIT or the Apache 2.0 License.
+Dual-licensed under [MIT](../../LICENSE-MIT) or the [Apache 2.0 License](../../LICENSE-APACHE).
 
 ### Documentation
 

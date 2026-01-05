@@ -6,7 +6,7 @@ The different algorithms are implemented as separate modules within this crate.
 [![Build status](https://github.com/RaoulLuque/tsp-rs/workflows/ci/badge.svg)](https://github.com/RaoulLuque/tsp-rs/actions)
 [![](https://img.shields.io/crates/v/tsp-solvers.svg)](https://crates.io/crates/tsp-solvers)
 
-Dual-licensed under MIT or the Apache 2.0 License.
+Dual-licensed under [MIT](../../LICENSE-MIT) or the [Apache 2.0 License](../../LICENSE-APACHE).
 
 ### Documentation
 
