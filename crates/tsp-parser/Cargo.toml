@@ -21,6 +21,7 @@ tsp-core = {workspace = true}
 
 [dev-dependencies]
 criterion = {workspace = true}
+tsp-macros = {workspace = true}
 
 [features]
 _miri = []

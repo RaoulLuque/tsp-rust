@@ -1,1 +1,2 @@
-mod parse_and_compute_dist;
+mod check_against_golden_file;
+mod parse_without_error;
