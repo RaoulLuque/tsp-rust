@@ -8,6 +8,7 @@ macro_rules! run_fn_on_instance {
     };
 }
 
+#[rust_analyzer::skip]
 #[macro_export]
 macro_rules! test_fn_on_all_instances {
     ($fn_name:ident, $name:ident) => {

@@ -14,5 +14,7 @@ fn parse_instance_non_symmetric(path: &str) {
     assert!(parsing_result.is_ok());
 }
 
+#[rust_analyzer::skip]
 test_fn_on_all_instances!(parse_instance_symmetric, symmetric);
+#[rust_analyzer::skip]
 test_fn_on_all_instances!(parse_instance_non_symmetric, non_symmetric);
