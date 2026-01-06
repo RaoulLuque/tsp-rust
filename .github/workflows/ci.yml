@@ -14,10 +14,9 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        crate: [tsp-core, tsp-parser, tsp-rs, tsp-solvers]
-        rust: [stable, beta, nightly]
+        rust: [stable] # [stable, beta, nightly] # For now, only test stable to save CI resources
             
-    name: Tests ${{ matrix.crate }} (Rust ${{ matrix.rust }})
+    name: Tests (Rust ${{ matrix.rust }})
 
     steps:
       - name: Checkout code
@@ -39,15 +38,16 @@ jobs:
 
       - name: Build and test
         run: |
-          # Run tests with default and all features. Powerset of features is only tested on merge
-          # or with the S-run-thorough-ci-tests label to save CI resources.
-          cargo nextest run --package ${{ matrix.crate }} --verbose
+          # Run tests with default and all features.
+          cargo nextest run --verbose
+          cargo nextest run --all-features --verbose
   
   miri:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        crate: [tsp-core, tsp-parser, tsp-rs, tsp-solvers]
+    # Possibly re-enable this, if runs take too long otherwise
+    # strategy:
+    #   matrix:
+    #     crate: [tsp-core, tsp-parser, tsp-rs, tsp-solvers]
             
     name: Miri ${{ matrix.crate }}
 
@@ -71,12 +71,6 @@ jobs:
         uses: Swatinem/rust-cache@v2
 
       - name: Run miri
-        if: ${{ matrix.crate != 'tsp-parser' }}
         run: |
-          MIRIFLAGS=-Zmiri-disable-isolation cargo miri nextest run --features _miri --package ${{ matrix.crate }}
-        
-      - name: Run miri for tsp-parser
-        if: ${{ matrix.crate == 'tsp-parser' }}
-        run: |
-          # tsp-parser has some very long-running tests (IO-Heavy), so we only run a short subset under Miri
+          MIRIFLAGS=-Zmiri-disable-isolation cargo miri nextest run --features _miri --package tsp-core --package tsp-rs --package tsp-solvers
           MIRIFLAGS=-Zmiri-disable-isolation cargo miri nextest run --features _miri -E 'test(short)' --package "tsp-parser"
