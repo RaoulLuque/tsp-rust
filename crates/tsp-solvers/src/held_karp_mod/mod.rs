@@ -99,7 +99,7 @@ mod trees;
 /// For a detailed explanation of the algorithm, see the [module-level
 /// documentation][crate::held_karp_mod].
 pub fn held_karp(distances: &Matrix<Distance>) -> Option<UnTour> {
-    info!("Starting Held-Karp solver for instance");
+    info!("Starting Held-Karp solver");
     let mut edge_states = Matrix::new(
         vec![EdgeState::Available; distances.data().len()],
         distances.dimension(),

@@ -33,3 +33,7 @@ harness = false
 [[bench]]
 name = "held_karp"
 harness = false
+
+[[bench]]
+name = "held_karp_parallel"
+harness = false

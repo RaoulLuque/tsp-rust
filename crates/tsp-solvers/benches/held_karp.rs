@@ -7,7 +7,9 @@ use tsp_solvers::held_karp;
 macro_rules! create_held_karp_benchmarks {
     ($file_path:expr, $name_concorde:ident, $name_own:ident) => {
         fn $name_concorde(c: &mut Criterion) {
-            let tsp_instance = parse_tsp_instance(concat!("../../instances/", $file_path)).unwrap();
+            let tsp_instance =
+                parse_tsp_instance::<MatrixSym<Distance>>(concat!("../../instances/", $file_path))
+                    .unwrap();
             let lower_distance_matrix = concorde_rs::LowerDistanceMatrix {
                 num_nodes: tsp_instance.metadata().dimension as u32,
                 values: tsp_instance
