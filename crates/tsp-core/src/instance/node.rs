@@ -18,3 +18,15 @@ impl Sub<usize> for Node {
         Node(self.0 - rhs)
     }
 }
+
+impl From<usize> for Node {
+    fn from(value: usize) -> Self {
+        Node(value)
+    }
+}
+
+impl From<Node> for usize {
+    fn from(node: Node) -> Self {
+        node.0
+    }
+}

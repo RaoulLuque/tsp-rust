@@ -48,45 +48,14 @@ impl Ord for UnEdge {
     }
 }
 
-#[derive(Debug)]
-/// An undirected edge with an inverse weight for use in a max-heap.
-///
-/// That is, when comparing two edges, the one with the lower cost is considered greater.
-pub struct InvWeightUnEdge {
-    pub cost: Distance,
-    pub from: Node,
-    pub to: Node,
-}
-
-impl InvWeightUnEdge {
-    pub fn new(cost: Distance, from: Node, to: Node) -> Self {
-        Self { cost, from, to }
-    }
-
-    pub fn to_edge(&self) -> UnEdge {
-        UnEdge {
-            from: self.from,
-            to: self.to,
-        }
+impl From<(Node, Node)> for UnEdge {
+    fn from(value: (Node, Node)) -> Self {
+        UnEdge::new(value.0, value.1)
     }
 }
 
-impl PartialEq for InvWeightUnEdge {
-    fn eq(&self, other: &Self) -> bool {
-        self.cost == other.cost
-    }
-}
-
-impl Eq for InvWeightUnEdge {}
-
-impl PartialOrd for InvWeightUnEdge {
-    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-        Some(other.cost.cmp(&self.cost))
-    }
-}
-
-impl Ord for InvWeightUnEdge {
-    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-        other.cost.cmp(&self.cost)
+impl From<(usize, usize)> for UnEdge {
+    fn from(value: (usize, usize)) -> Self {
+        UnEdge::new(Node(value.0), Node(value.1))
     }
 }
