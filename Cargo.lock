@@ -605,6 +605,7 @@ name = "tsp-parser"
 version = "0.1.0"
 dependencies = [
  "criterion",
+ "log",
  "memchr",
  "memmap2",
  "thiserror",

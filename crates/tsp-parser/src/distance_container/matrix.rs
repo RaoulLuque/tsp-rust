@@ -1,5 +1,6 @@
 use std::cell::UnsafeCell;
 
+use log::trace;
 use tsp_core::instance::{InstanceMetadata, distance::Distance, matrix::Matrix};
 
 use super::ParseFromTSPLib;
@@ -74,7 +75,7 @@ fn compute_dists_from_node_coords<PointType: Send + Sync>(
                     rest_distances.split_at_mut(current_chunk_size);
                 rest_distances = rest_distances_tmp;
 
-                println!(
+                trace!(
                     "Current chunk start: {}, first entry index: {}, chunk size: {}, number of \
                      entries in chunk: {}",
                     current_chunk_start,
@@ -125,7 +126,7 @@ fn compute_dists_from_node_coords_chunk<PointType>(
     let (end_row, end_column) = find_row_column_from_lower_triangle_index(
         first_entry_index + number_of_entries_in_chunk - 1,
     );
-    println!(
+    trace!(
         "Start row: {}, start column: {}, end row: {}, end column: {}",
         start_row, start_column, end_row, end_column
     );
