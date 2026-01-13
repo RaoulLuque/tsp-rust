@@ -75,6 +75,9 @@ pub fn ceil_distance_2d(point_a: &Point2D, point_b: &Point2D) -> Distance {
 /// Computes the geographical distance between two points as defined in TSPLIB95.
 #[inline(always)]
 pub fn geographical_distance(point_a: &GeoPoint, point_b: &GeoPoint) -> Distance {
+    if point_a == point_b {
+        return Distance(0);
+    }
     let rrr = 6378.388;
     let q1 = (point_a.longitude - point_b.longitude).cos();
     let q2 = (point_a.latitude - point_b.latitude).cos();
